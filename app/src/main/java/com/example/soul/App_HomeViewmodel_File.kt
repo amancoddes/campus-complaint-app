@@ -1,0 +1,49 @@
+package com.example.soul
+
+import android.util.Log
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.paging.cachedIn
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+
+@HiltViewModel
+class Homeviewmodel @Inject constructor(private val repository: FirstAppModuleRepository, private val userRepoComplint:ReportsRepoRoom,
+                                             private val userProfileDataRepo:UserProfileDataRepo
+): ViewModel(){
+
+
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            userRepoComplint.checkUidCompalints()
+        }
+        Log.e("runroom ","room check start ")
+        viewModelScope.launch(Dispatchers.IO) {
+            userProfileDataRepo.checkAndFetch()
+        }
+    }
+
+
+
+    // search in top bar
+    private val search= MutableStateFlow("")
+    val searchToCompose = search.asStateFlow()
+
+    fun updateSerchValue(input:String){
+        search.value=input
+    }
+
+
+
+    val complaintPagingFlow=
+        repository.getComplaintsPaging()
+            .flow// trigger internally code which code start flow code which observe and emit .load() return data , which call by any pager class method
+            .cachedIn(viewModelScope)
+
+
+}

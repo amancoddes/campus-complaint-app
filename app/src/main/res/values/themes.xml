@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- 🔹 Normal App Theme -->
+    <style name="Theme.Soul" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Your normal app settings can go here -->
+    </style>
+
+    <!-- 🔹 Custom Launch Theme (No system splash / no white flash) -->
+    <style name="Theme.Soul.NoSplash" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Remove Android’s default launch preview -->
+
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowDisablePreview">true</item>
+    </style>
+
+</resources>
