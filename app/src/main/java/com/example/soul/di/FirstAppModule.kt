@@ -56,21 +56,15 @@ object FirebaseModule {
     @Singleton
     fun returnFirebase()= FirebaseFirestore.getInstance()
 
-//    @Provides
-//    @Singleton
-//    fun provideStorage(): FirebaseStorage =
-//        FirebaseStorage.getInstance()
-
 
 
     @Provides
     @Singleton
     fun returnRepo(fire:FirebaseFirestore,auth:FirebaseAuth)=FirstAppModuleRepository(fire,auth)
-    //storage:FirebaseStorage
-    //,storage)
+
 
     @Provides
-    @Singleton// life of method ye pure aap mei rahe ga
+    @Singleton// live full app life
     fun returnAuthRep()=FirebaseAuth.getInstance()
 
 
@@ -78,50 +72,16 @@ object FirebaseModule {
     @Singleton
     fun returnUserDataRepoObj(fire: FirebaseFirestore,auth:FirebaseAuth)=UserDataRepo(fire,auth)
 
-/*
-.AUTOMATIC
-Room ka default decision-maker mode.
-Room khud decide karta hai ki:
-	•	WAL enable karna hai ya
-	•	TRUNCATE mode use karna hai
-
- */
-/*
-use Wal
-✅ Fast reads
-
-✅ Faster writes
-
-✅ Better concurrency
-
-✅ Crash-safe transactions
-
- */
 
 
 
-
-    /*
-    🔥 Agar yahan Activity context use kar dete:
-
-Activity destroy
-➡️ Room ke paas dead Activity ka reference reh jata
-➡️ Memory leak
-➡️ crash chance (because Activity no longer valid)
-     */
     @Provides
     @Singleton
-/*
-Room context ko store karke rakhta hai (usually as a singleton DB instance).
-Isi liye yahan Application context hi use karna zaroori hota hai.
- */
     fun returnRoomAppDatabaseImplObject(@ApplicationContext context: Context):AppDataBase {//NO. Room khud-se “background mei chalta” nahi hai.//Background work tab hota hai jab tum query call karte ho
         return Room.databaseBuilder(context = context, klass = AppDataBase::class.java, name = "complainAppUserData")
             .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING).
         build()// fallback for migataion for app update
     }
-//✔ Call — jab kaam turant karwana ho
-//✔ Pass — jab object ko future me OS ki zarurat padegi
     @Provides
     @Singleton
     fun provideGlobalMutex(): Mutex = Mutex()
@@ -156,48 +116,3 @@ Isi liye yahan Application context hi use karna zaroori hota hai.
     fun returnComplaintDao(dao: ComplaintDataRoom.ComplaintDao,auth: FirebaseAuth,fire:ReportsRepoFirebase,mutex: Mutex)=ReportsRepoRoom(dao,auth,fire,mutex)
 
 }
-
-/*
-@ApplicationContext Hilt ko clear instruction देता है:
-
-✔ “Mujhe application-level context do.”
-
-✔ “Activity destroy ho jaaye — phir bhi ye safe रहे।”
-
-✔ “Ye global context hai, memory leak free।”
- */
-
-
-
-//✔ @HiltAndroidApp DI graph banata hai
-
-
-
-/*
-
-why we manually pass context in method when we already write @HiltandroidApp
-🌟 THEN WHY @HiltAndroidApp cannot automatically inject context?
-
-Great question!
-Reason simple hai:
-
-✔ @HiltAndroidApp DI graph banata hai
-
-BUT
-
-❌ woh functions me auto-context inject nahi kar sakta
-
-because Hilt ko yeh nahi pata function kis type ka context expect kar raha hai.
-
-Hilt ke rule:
-
-“DI system binary choices auto resolve nahi karega.”
-
-Yani:
-	•	ActivityContext?
-	•	ApplicationContext?
-
-Hilt never guesses.
-Tumhe explicitly bolna padta hai.
-
- */
