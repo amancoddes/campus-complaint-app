@@ -16,9 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
-//PreviewScreenViewModelClass
-// its not HOme screen viewmodel class
-@HiltViewModel// name is incorrect
+@HiltViewModel
 class PreviewScreenViewModelClass @Inject constructor(private val repository: FirstAppModuleRepository, private val userRepoComplint:ReportsRepoRoom,
                                              private val fetcher: LocationFetcher, private val validator: LocationValidator
 
@@ -26,10 +24,7 @@ class PreviewScreenViewModelClass @Inject constructor(private val repository: Fi
                                        @FirebaseModule.IoDispatcher private val ioDispatcher: CoroutineDispatcher
 
 ):ViewModel() {
-    // yaha par ye dono aak dusre se independent hai esliye async{} use nhi kiya, kyuki agar aak faild hua to pura coroutine khatam
 
-
-    // inside page content
     //Complain building
     private val _building = mutableStateOf("")
     val building: State<String> = _building
@@ -83,27 +78,30 @@ class PreviewScreenViewModelClass @Inject constructor(private val repository: Fi
     private val _uiState = MutableStateFlow<ComplaintUiState>(ComplaintUiState.Idle)
     val uiState = _uiState.asStateFlow()
 
-    fun sendComplain() {
+    fun sendComplain() =viewModelScope.launch(mainDispatcher) {
 
-       // Log.e("validate2", " start complaint validation send success 1")
         _uiState.value = ComplaintUiState.Loading
         println(" send 1 before launch  😖")
 
-        viewModelScope.launch(mainDispatcher) {
-
-
-            //delay(10000)
-         //   Log.e("validate2", " start complaint validation send success ")
 
 
 
-            //Log.e("validate2", " start complaint validation")
+
+
+            if (_complain.value.isBlank()){
+                _uiState.value = ComplaintUiState.Idle
+                _snackbarEvent.emit("choose complain type")
+                return@launch
+            }
+
             val loc = _location.value ?: run {
                 _uiState.value = ComplaintUiState.Idle
                 _snackbarEvent.emit("some thing wrong location not fetch")
                 return@launch
             }
-            println(" send 2 after null location check  😖")
+
+
+
 //            if (!isInsideCollege(loc)) {
 //                viewModelScope.launch {
 //                    _snackbarEvent.emit("you outside the campus")
@@ -111,21 +109,12 @@ class PreviewScreenViewModelClass @Inject constructor(private val repository: Fi
 //                return
 //            }
 
-           // Log.e("validate2", " start complaint validation -> find confidence ")
-
             val confidence = getOutdoorConfidence(loc.accuracy)
-           // Log.e("validate2", " start complaint validation -> find confidence -> $confidence ")
             if (confidence == Confidence.REJECT) {
                 _uiState.value = ComplaintUiState.Idle
                 _snackbarEvent.emit("Location signal is weak. Please move to an open area and try again  ")
                 return@launch
             }
-            println(" send 3 after get confidence $confidence  😖")
-
-//            Log.e(
-//                "validate2",
-//                " start complaint validation -> create tilekey ya tilekeys according the confidence"
-//            )
 
 
             val titleKeyList = giveTieKeys(
@@ -137,11 +126,9 @@ class PreviewScreenViewModelClass @Inject constructor(private val repository: Fi
 
             if (titleKeyList.isEmpty()) {
                 _uiState.value = ComplaintUiState.Idle
-
                 _snackbarEvent.emit("Location signal is weak. Please move to an open area and try again..")
                 return@launch
             }
-            println(" send 4 after get the tileKeyList $titleKeyList  🦋")
 
             val hashList = hashCreate(titleKeyList, title = _complain.value, onError = {
                 _snackbarEvent.emit(it)
@@ -153,40 +140,30 @@ class PreviewScreenViewModelClass @Inject constructor(private val repository: Fi
                 return@launch
             }
 
-            println(" send 6 after get the hashList $hashList  🦋")
-
-         //   Log.e("validate2", " start complaint validation create -> $titleKeyList")
-
-
             val cutoffTime = System.currentTimeMillis() - (14L * 24 * 60 * 60 * 1000)
-            println(" send 7 after fetch the complaint from the backend 🦋")
 
-           // Log.e("validate2", " start complaint validation  fetch matches from the backend ")
-
-            val tilesBackend = withContext(ioDispatcher) {
-                userRepoComplint.fetchTileKeys(hashList, cutoffTime)
+            val storeComplainLists = withContext(ioDispatcher) {
+                userRepoComplint.fetchComplaints(hashList, cutoffTime)
             }
-            println(" send 7 after fetch the complaint from the backend - > $tilesBackend 🦋")
 
+        val decision = storeComplainLists.fold(
+            onSuccess = { complaints ->
+              decideComplaintAction(
+                    candidates = complaints,
+                    newLat = loc.latitude,
+                    newLng = loc.longitude,
+                    newConfidence = confidence
+                )
+            },
+            onFailure = {
+                _uiState.value=ComplaintUiState.Idle
+                _snackbarEvent.emit(it.message?:"some thing wrong try again")
+                println(" filaure 🥸")
+                return@launch
 
-            //  Log.e(
-//                "validate2",
-//                " start complaint validation after matches from backend -> $tilesBackend "
-//            )
-          //  Log.e("validate2", " start complaint validation  now start decision ::")
+            }
+        )
 
-
-            val decision = decideComplaintAction(
-                candidates = tilesBackend,
-                newLat = loc.latitude,
-                newLng = loc.longitude,
-                newConfidence = confidence
-            )
-
-
-
-
-           // Log.e("validate", "Decision = $decision")
 
             when (decision) {
                 Decision.REJECT -> {
@@ -196,16 +173,16 @@ class PreviewScreenViewModelClass @Inject constructor(private val repository: Fi
 
                 Decision.ALLOW_NEW -> {
 
-                    val x = buildCenterKey(loc.latitude, loc.longitude, 4)
-                    val y = makeHash(
+                    val centerTile = buildCenterKey(loc.latitude, loc.longitude, 4)
+                    val complainPincode = makeHash(
                         mode = Mode.OUTDOOR,
-                        tileKey = x,
+                        tileKey = centerTile,
                         title = _complain.value,
                         onError = {
                             _snackbarEvent.emit(it)
                         })
 
-                    val dataComplain = y?.let {
+                    val dataComplain = complainPincode?.let {
                         FirstAppFireStoreDataClass(
                             complain = _complain.value,
                             description = _description.value,
@@ -219,10 +196,10 @@ class PreviewScreenViewModelClass @Inject constructor(private val repository: Fi
                         )
                     } ?: run {
                         _uiState.value = ComplaintUiState.Idle
+                        _snackbarEvent.emit("something wrong try again")
                         return@launch
                     }
 
-                 //   Log.e("validate2", " start complaint validation  send the complaint ")
 
                     val result = withContext(ioDispatcher) {
                         repository.sendComplain(dataComplain)
@@ -231,20 +208,16 @@ class PreviewScreenViewModelClass @Inject constructor(private val repository: Fi
 
                     result.fold(
                         onSuccess = { id ->
-                      //      Log.e("validate2", " start complaint validation send success ")
 
                             _uiState.value = ComplaintUiState.Success(id)
                             userRepoComplint.fetchNewComplaint(id)
                             return@launch
                         },
                         onFailure = { e ->
-                          //  Log.e("validate", " start complaint validation failed to send ")
 
                             _uiState.value = ComplaintUiState.Idle
                             _snackbarEvent.emit("error : $e")
-//                            _uiState.value = ComplaintUiState.Error(
-//                                e.message ?: "Failed to create complaint"
-//                            )
+
                             return@launch
                         }
                     )
@@ -257,7 +230,7 @@ class PreviewScreenViewModelClass @Inject constructor(private val repository: Fi
             _uiState.value = ComplaintUiState.Idle
 
             return@launch// change here
-        }
+
 
 
 }
@@ -276,20 +249,19 @@ class PreviewScreenViewModelClass @Inject constructor(private val repository: Fi
 
     private val _location = MutableStateFlow<Location?>(null)
     val location = _location.asStateFlow()
-    private val _indoor = MutableStateFlow(true)
-   // val indoor = _indoor.asStateFlow()
-
-//    private val _error = MutableSharedFlow<String>()
-//    val error = _error
+  //  private val _indoor = MutableStateFlow(true)
+  //  val indoor = _indoor.asStateFlow()
 
 
     fun fetchLocation(inside:Boolean=false) {
-        validator.reset()   //  sirf yahan reset karna hai ------
+        validator.reset()   //  reset
         fetchLocationInternal(inside)
     }
 
     private fun fetchLocationInternal(inside: Boolean) {
+        println(" fetch location internal again run ☘️")
         _uiState.value = ComplaintUiState.Loading
+
 
         fetcher.fetch(
             onResult = { loc ->
@@ -298,19 +270,23 @@ class PreviewScreenViewModelClass @Inject constructor(private val repository: Fi
                         loc,
                         accept = { x:Location,y:Boolean ->
                             _location.value = x
-                            _indoor.value = y
+                          //  _indoor.value = y
                             _uiState.value = ComplaintUiState.Idle
+                            viewModelScope.launch(mainDispatcher) {
+                                _snackbarEvent.emit("location fetch successfully")
+                            }
                             println(" accept run 😖")
                                  },
                         retry = {
                             viewModelScope.launch(mainDispatcher) {
-                                delay(800)        // delay add karna  hai  IMPORTANT
+                                delay(900)        // delay add because fast request can can often flp error
+                                print(" call retry 😚")
                                 fetchLocationInternal(inside)
                             } },
                         showError = {
                             viewModelScope.launch(mainDispatcher) {
                                 _uiState.value = ComplaintUiState.Idle
-                                _snackbarEvent.emit("Location not precise. Try again.")
+                                _snackbarEvent.emit("Location accuracy is low Try again")
                             }
                         }
                         ,
@@ -318,16 +294,16 @@ class PreviewScreenViewModelClass @Inject constructor(private val repository: Fi
                     )
                 }else{
                     viewModelScope.launch(mainDispatcher) {
-                        print("esle run 😃😖🥰")
+                        print("else run 😃😖🥰")
                         _uiState.value=ComplaintUiState.Idle
-                        _snackbarEvent.emit("location not fetch ")
+                        _snackbarEvent.emit("some thing wrong location not precise")
                     }
                 }
             },
-            onError = {
+            onError = { error ->
                 viewModelScope.launch(mainDispatcher) {
                     _uiState.value = ComplaintUiState.Idle
-                    _snackbarEvent.emit(it.message ?: "Location failed")
+                    _snackbarEvent.emit(error.message ?: "Location failed")
                 }
             }
 
@@ -409,7 +385,6 @@ val check = checkBuilding(location = loc, building = _building.value, buildNotMa
                     _snackbarEvent.emit(it)
                 }
                 )
-            Log.e("location22", " the hash -> $hashInside")
 
             if(hashInside==null) {
                 _uiState.value = ComplaintUiState.Idle
@@ -421,8 +396,7 @@ val check = checkBuilding(location = loc, building = _building.value, buildNotMa
 
 
             }
-            Log.e("locaiton22", " all hashes -> $tilesBackendInsideComplaint")
-           // _uiState.value = ComplaintUiState.Success()
+
 
             val decisionInside= validateInsideOldComplaints(old = tilesBackendInsideComplaint)
 
@@ -449,20 +423,16 @@ val check = checkBuilding(location = loc, building = _building.value, buildNotMa
 
                     resultInside.fold(
                         onSuccess = { id ->
-                            Log.e("validate"," start complaint validation send success ")
 
                             _uiState.value = ComplaintUiState.Success(id)
                             userRepoComplint.fetchNewComplaint(id)
                             return@launch
                         },
                         onFailure = { e ->
-                            Log.e("validate"," start complaint validation failed to send ")
 
                             _uiState.value = ComplaintUiState.Idle
                             _snackbarEvent.emit( "error : $e")
-//                            _uiState.value = ComplaintUiState.Error(
-//                                e.message ?: "Failed to create complaint"
-//                            )
+
                             return@launch
                         }
                     )
@@ -470,23 +440,12 @@ val check = checkBuilding(location = loc, building = _building.value, buildNotMa
                 }
 
                 DecisionInside.Reject -> {
-
-                    // hey add there priority code 4-2-2026 ba4 ba4
-
-
-
-
                     _uiState.value = ComplaintUiState.PriorityIncrease
                     _snackbarEvent.emit(  " complaint already exist we increase one priority ")
                     return@launch
                 }
             }
 
-//            viewModelScope.launch {
-//                _snackbarEvent.emit("you are inside ${_building.value}")
-//                _uiState.value = ComplaintUiState.Success()
-//            }
-//            return
 
 
     }

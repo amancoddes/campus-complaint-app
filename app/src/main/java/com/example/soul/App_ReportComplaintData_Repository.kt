@@ -22,8 +22,8 @@ import javax.inject.Inject
 class ReportsRepoRoom @Inject constructor (private val dao: ComplaintDataRoom.ComplaintDao,private val auth: FirebaseAuth,private val firebase: ReportsRepoFirebase,private val mutex: Mutex){
 
 
-   suspend fun fetchTileKeys(hash:List<String>,cutoffTime: Long):List<FirstAppFireStoreDataClass>{
-         return firebase.fetchHash(hash,cutoffTime)
+   suspend fun fetchComplaints(hash:List<String>,cutoffTime: Long):Result<List<FirstAppFireStoreDataClass>>{
+         return firebase.fetchComplaintFromBackend(hash,cutoffTime)
     }
 
     suspend fun fetchInsideTileKeys(hash:String):List<FirstAppFireStoreDataClass>{

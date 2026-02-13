@@ -32,5 +32,10 @@ google-services.json
 
 # Android Profiling
 *.hprof
-
+#ignore Demo files
 app/src/main/java/com/example/soul/*Demo*.kt
+
+
+# Ignore test folders
+app/src/androidTest/
+#app/src/test/

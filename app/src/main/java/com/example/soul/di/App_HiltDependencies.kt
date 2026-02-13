@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase
 import com.example.soul.AppDataBase
 import com.example.soul.ComplaintDataRoom
 import com.example.soul.FirstAppModuleRepository
+import com.example.soul.LocationValidator
 import com.example.soul.ProfileRoom
 import com.example.soul.ReportsRepoFirebase
 import com.example.soul.ReportsRepoRoom
@@ -15,8 +16,6 @@ import com.example.soul.UserProfileDataFirebaseRepository
 import com.example.soul.UserProfileDataRepo
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
-import com.google.rpc.context.AttributeContext.Auth
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -90,6 +89,10 @@ object FirebaseModule {
     @Singleton
     fun returnDao(appDatabaseobj:AppDataBase)=appDatabaseobj.profileQueries()
 
+
+    @Provides
+    @Singleton
+    fun returnLocationValidation()=LocationValidator(currentTime = { System.currentTimeMillis()})
 
     @Provides
     @Singleton

@@ -2,7 +2,9 @@ package com.example.soul
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 
 
 sealed class ComplaintFetchResult2 {
@@ -15,27 +17,41 @@ sealed class ComplaintFetchResult2 {
 
 class ReportsRepoFirebase(private val firebase:FirebaseFirestore){
 
-    suspend fun fetchHash(
+    suspend fun fetchComplaintFromBackend(
         hashes: List<String>,
         cutoffTime: Long
-    ): List<FirstAppFireStoreDataClass> {
+    ): Result<List<FirstAppFireStoreDataClass> >{
 
-        if (hashes.isEmpty()) return emptyList()
+        if (hashes.isEmpty()) return Result.success(emptyList())
 
-        val db = FirebaseFirestore.getInstance()
+        return try {
 
-        val query = db.collection("complaints")
-            .whereIn("hash", hashes)                 // tile + title filter
-           .whereEqualTo("status", "ACTIVE")       // only active
-           .whereGreaterThan("timestamp", cutoffTime) // recent only
-            .orderBy("timestamp", Query.Direction.DESCENDING)
-            .limit(10)
+val result = withTimeout(10_000){
 
-        val snapshot = query.get().await()
+    val db = FirebaseFirestore.getInstance()
+    val snapshot = db.collection("complaints")
+        .whereIn("hash", hashes)                 // tile + title filter
+        .whereEqualTo("status", "ACTIVE")       // only active
+        .whereGreaterThan("timestamp", cutoffTime) // recent only
+        .orderBy("timestamp", Query.Direction.DESCENDING)
+        .limit(10).get().await()
 
-        return snapshot.documents.mapNotNull { doc ->
-            doc.toObject(FirstAppFireStoreDataClass::class.java)
+
+    snapshot.documents.mapNotNull { doc ->
+        doc.toObject(FirstAppFireStoreDataClass::class.java)
+    }
+}
+
+             return Result.success(result)
         }
+        catch (e:TimeoutCancellationException){
+            Result.failure(Exception("Network is slow. Please try again."))
+        }
+        catch (e:Exception){
+            Result.failure(e)
+        }
+
+
     }
 
 // whereln() ye list leta hai
