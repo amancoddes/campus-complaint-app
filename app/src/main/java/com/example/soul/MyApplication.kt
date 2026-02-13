@@ -15,7 +15,6 @@ class MyApplication2:Application(){
 
     override fun onCreate() {
         super.onCreate()
-println("hey application oncreate run")
         FirebaseApp.initializeApp(this)
         val settings = FirebaseFirestoreSettings.Builder()
             .setLocalCacheSettings(MemoryCacheSettings.newBuilder().build()) // In-Memory cache only

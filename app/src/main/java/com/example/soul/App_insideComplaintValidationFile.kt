@@ -2,7 +2,6 @@ package com.example.soul
 
 import android.location.Location
 import android.util.Log
-import java.util.Locale
 
 // village
 //26.50493° N, 83.87572

@@ -15,7 +15,7 @@ import androidx.compose.ui.layout.ContentScale
 import coil.compose.rememberAsyncImagePainter
 //
 @Composable
-fun SubmitSuccess(navigation:NavHostController,viewModelClass: HomeViewModelClass){
+fun SubmitSuccess(navigation:NavHostController,viewModelClass: PreviewScreenViewModelClass){
 Box(modifier = Modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.background)) {
     Image(
         painter = rememberAsyncImagePainter(model = R.drawable.image780),

@@ -16,10 +16,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
-
+//PreviewScreenViewModelClass
 // its not HOme screen viewmodel class
 @HiltViewModel// name is incorrect
-class HomeViewModelClass @Inject constructor(private val repository: FirstAppModuleRepository, private val userRepoComplint:ReportsRepoRoom,
+class PreviewScreenViewModelClass @Inject constructor(private val repository: FirstAppModuleRepository, private val userRepoComplint:ReportsRepoRoom,
                                              private val fetcher: LocationFetcher, private val validator: LocationValidator
 
                                              , @FirebaseModule.MainDispatcher private val mainDispatcher: CoroutineDispatcher,
@@ -85,21 +85,25 @@ class HomeViewModelClass @Inject constructor(private val repository: FirstAppMod
 
     fun sendComplain() {
 
-        _uiState.value = ComplaintUiState.Loading
        // Log.e("validate2", " start complaint validation send success 1")
+        _uiState.value = ComplaintUiState.Loading
+        println(" send 1 before launch  😖")
 
         viewModelScope.launch(mainDispatcher) {
+
+
+            //delay(10000)
          //   Log.e("validate2", " start complaint validation send success ")
 
 
 
             //Log.e("validate2", " start complaint validation")
             val loc = _location.value ?: run {
-                _uiState.value = ComplaintUiState.PriorityIncrease
+                _uiState.value = ComplaintUiState.Idle
                 _snackbarEvent.emit("some thing wrong location not fetch")
                 return@launch
             }
-
+            println(" send 2 after null location check  😖")
 //            if (!isInsideCollege(loc)) {
 //                viewModelScope.launch {
 //                    _snackbarEvent.emit("you outside the campus")
@@ -110,17 +114,18 @@ class HomeViewModelClass @Inject constructor(private val repository: FirstAppMod
            // Log.e("validate2", " start complaint validation -> find confidence ")
 
             val confidence = getOutdoorConfidence(loc.accuracy)
-            Log.e("validate2", " start complaint validation -> find confidence -> $confidence ")
-
+           // Log.e("validate2", " start complaint validation -> find confidence -> $confidence ")
             if (confidence == Confidence.REJECT) {
                 _uiState.value = ComplaintUiState.Idle
                 _snackbarEvent.emit("Location signal is weak. Please move to an open area and try again  ")
                 return@launch
             }
-            Log.e(
-                "validate2",
-                " start complaint validation -> create tilekey ya tilekeys according the confidence"
-            )
+            println(" send 3 after get confidence $confidence  😖")
+
+//            Log.e(
+//                "validate2",
+//                " start complaint validation -> create tilekey ya tilekeys according the confidence"
+//            )
 
 
             val titleKeyList = giveTieKeys(
@@ -128,34 +133,47 @@ class HomeViewModelClass @Inject constructor(private val repository: FirstAppMod
                 confidence = confidence,
                 accuracy = loc.accuracy
             )
+
+
             if (titleKeyList.isEmpty()) {
                 _uiState.value = ComplaintUiState.Idle
 
                 _snackbarEvent.emit("Location signal is weak. Please move to an open area and try again..")
                 return@launch
             }
+            println(" send 4 after get the tileKeyList $titleKeyList  🦋")
 
             val hashList = hashCreate(titleKeyList, title = _complain.value, onError = {
                 _snackbarEvent.emit(it)
             }, mode = Mode.OUTDOOR)
-            if (hashList.isEmpty()) return@launch
+            if (hashList.isEmpty())
+            {
+                _uiState.value=ComplaintUiState.Idle
+                _snackbarEvent.emit("something wrong :Location")
+                return@launch
+            }
 
-            Log.e("validate2", " start complaint validation create -> $titleKeyList")
+            println(" send 6 after get the hashList $hashList  🦋")
+
+         //   Log.e("validate2", " start complaint validation create -> $titleKeyList")
 
 
             val cutoffTime = System.currentTimeMillis() - (14L * 24 * 60 * 60 * 1000)
+            println(" send 7 after fetch the complaint from the backend 🦋")
 
-            Log.e("validate2", " start complaint validation  fetch matches from the backend ")
+           // Log.e("validate2", " start complaint validation  fetch matches from the backend ")
 
             val tilesBackend = withContext(ioDispatcher) {
                 userRepoComplint.fetchTileKeys(hashList, cutoffTime)
             }
+            println(" send 7 after fetch the complaint from the backend - > $tilesBackend 🦋")
 
-            Log.e(
-                "validate2",
-                " start complaint validation after matches from backend -> $tilesBackend "
-            )
-            Log.e("validate2", " start complaint validation  now start decision ::")
+
+            //  Log.e(
+//                "validate2",
+//                " start complaint validation after matches from backend -> $tilesBackend "
+//            )
+          //  Log.e("validate2", " start complaint validation  now start decision ::")
 
 
             val decision = decideComplaintAction(
@@ -168,7 +186,7 @@ class HomeViewModelClass @Inject constructor(private val repository: FirstAppMod
 
 
 
-            Log.e("validate", "Decision = $decision")
+           // Log.e("validate", "Decision = $decision")
 
             when (decision) {
                 Decision.REJECT -> {
@@ -204,22 +222,23 @@ class HomeViewModelClass @Inject constructor(private val repository: FirstAppMod
                         return@launch
                     }
 
-                    Log.e("validate2", " start complaint validation  send the complaint ")
+                 //   Log.e("validate2", " start complaint validation  send the complaint ")
 
                     val result = withContext(ioDispatcher) {
                         repository.sendComplain(dataComplain)
                     }
 
+
                     result.fold(
                         onSuccess = { id ->
-                            Log.e("validate2", " start complaint validation send success ")
+                      //      Log.e("validate2", " start complaint validation send success ")
 
                             _uiState.value = ComplaintUiState.Success(id)
                             userRepoComplint.fetchNewComplaint(id)
                             return@launch
                         },
                         onFailure = { e ->
-                            Log.e("validate", " start complaint validation failed to send ")
+                          //  Log.e("validate", " start complaint validation failed to send ")
 
                             _uiState.value = ComplaintUiState.Idle
                             _snackbarEvent.emit("error : $e")
@@ -281,14 +300,15 @@ class HomeViewModelClass @Inject constructor(private val repository: FirstAppMod
                             _location.value = x
                             _indoor.value = y
                             _uiState.value = ComplaintUiState.Idle
+                            println(" accept run 😖")
                                  },
                         retry = {
-                            viewModelScope.launch {
+                            viewModelScope.launch(mainDispatcher) {
                                 delay(800)        // delay add karna  hai  IMPORTANT
                                 fetchLocationInternal(inside)
                             } },
                         showError = {
-                            viewModelScope.launch {
+                            viewModelScope.launch(mainDispatcher) {
                                 _uiState.value = ComplaintUiState.Idle
                                 _snackbarEvent.emit("Location not precise. Try again.")
                             }
@@ -296,11 +316,16 @@ class HomeViewModelClass @Inject constructor(private val repository: FirstAppMod
                         ,
                         inside = inside
                     )
+                }else{
+                    viewModelScope.launch(mainDispatcher) {
+                        print("esle run 😃😖🥰")
+                        _uiState.value=ComplaintUiState.Idle
+                        _snackbarEvent.emit("location not fetch ")
+                    }
                 }
             },
             onError = {
-                viewModelScope.launch {
-                    println("its error from location ")
+                viewModelScope.launch(mainDispatcher) {
                     _uiState.value = ComplaintUiState.Idle
                     _snackbarEvent.emit(it.message ?: "Location failed")
                 }
@@ -475,7 +500,7 @@ sealed class ComplaintUiState {
 
     data object Loading : ComplaintUiState()
 
-    data class Success(val documentId: String="_") : ComplaintUiState()
+    data class Success(val documentId: String) : ComplaintUiState()
 
     data class Error(val message: String) : ComplaintUiState()
 

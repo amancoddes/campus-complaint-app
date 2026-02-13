@@ -61,7 +61,7 @@ composable(
 
     val uriStr = backStackEntry.arguments?.getString("imageUri")
     val uri = Uri.parse(uriStr)
-    val view: HomeViewModelClass = hiltViewModel(backStackEntry)
+    val view: PreviewScreenViewModelClass= hiltViewModel(backStackEntry)
     PreviewPage(navHostController, imageUri = uri,view)
 }
 
@@ -79,12 +79,12 @@ composable(
 
             val uriStr = backStackEntry.arguments?.getString("imageUri")
             val uri = Uri.parse(uriStr)
-            val view: HomeViewModelClass = hiltViewModel(backStackEntry)
+            val view: PreviewScreenViewModelClass = hiltViewModel(backStackEntry)
             complaintInside(navHostController, imageUri = uri,view)
         }
 
         composable(route=AddReportScreens.SubmitSuccess.route){
-            val view:HomeViewModelClass= hiltViewModel()
+            val view:PreviewScreenViewModelClass= hiltViewModel()
             SubmitSuccess(navHostController,view)
         }
 

@@ -34,7 +34,9 @@ fun giveTieKeys(
 ) : List<String> {
     val precision=4
 // find the tile key
+
     val centerTile = buildCenterKey(userLat,userLng,4)
+
 
     // center locaiton
     val (centerLat, centerLng) = tileCenter(centerTile, 4)
@@ -123,7 +125,7 @@ fun buildCenterKey(
     lng: Double,
     precision: Int
 ): String {
-    Log.e("location22"," buildCenterKey ->  $lat and $lng ")
+   // Log.e("location22"," buildCenterKey ->  $lat and $lng ")
 
     val factor = 10.0.pow(precision)
 
@@ -318,11 +320,11 @@ suspend fun makeHash(
 
 
 
-
-    if (tileKey.isNullOrBlank()) {//null.isNullOrEmpty() // true  👉 Null + empty 👉 Lekin "   " ko miss kar deta hai ❌
+    if (tileKey.isNullOrBlank()) {//null.isNullOrEmpty() // true   Null + empty  but its  "   " ko miss kar deta hai ❌ ,so use blank
         onError("location required")
         return null
     }
+
 
     if (title.isNullOrBlank()) {
         onError("Title required")

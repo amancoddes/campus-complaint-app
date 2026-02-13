@@ -65,7 +65,7 @@ import coil.compose.rememberAsyncImagePainter
 fun PreviewPage(
     navHostController: NavHostController,
     imageUri: Uri?,
-    viewModel: HomeViewModelClass
+    viewModel: PreviewScreenViewModelClass
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -144,7 +144,7 @@ fun PreviewPageContent(
     navHostController: NavHostController,
     imageUri: Uri? = null,
     // ye home ka viewmodel nhi hai preview outside complaint ka hai
-    viewModel:HomeViewModelClass
+    viewModel:PreviewScreenViewModelClass
 ) {
 
     DisposableEffect(Unit) {

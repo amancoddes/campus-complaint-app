@@ -64,7 +64,7 @@ import coil.compose.rememberAsyncImagePainter
 fun complaintInside(
     navHostController: NavHostController,
     imageUri: Uri?,
-    viewModel: HomeViewModelClass) {
+    viewModel: PreviewScreenViewModelClass) {
     val state by viewModel.uiState.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -131,7 +131,7 @@ fun complaintInside(
         navHostController: NavHostController,
         imageUri: Uri? = null,
         // ye home ka viewmodel nhi hai preview outside complaint ka hai
-        viewModel: HomeViewModelClass
+        viewModel: PreviewScreenViewModelClass
     ) {
 
 
