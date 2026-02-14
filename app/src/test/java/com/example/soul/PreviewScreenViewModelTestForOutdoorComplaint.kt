@@ -12,6 +12,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -80,7 +81,7 @@ class PreviewScreenViewModelTest {
 
         viewModelObject.fetchLocation(isInside)
 
-        runCurrent()
+        advanceUntilIdle()
 
     val snackBarMessage=snackBarMsg.await()
     val screenState=viewModelObject.uiState.value
@@ -152,7 +153,7 @@ class PreviewScreenViewModelTest {
         val isInside=false
         viewModelObject.fetchLocation(isInside)
 
-        runCurrent()
+       advanceUntilIdle()
 
         val errorMessage=message.await()
         val screenState=viewModelObject.uiState.value
@@ -203,7 +204,7 @@ class PreviewScreenViewModelTest {
         // call sendComplain after get location from flp and after validate it
         viewModelClassObject.sendComplain()
 
-        runCurrent()
+        advanceUntilIdle()
 
         val viewModelClassUIState=viewModelClassObject.uiState.value
         assertEquals(ComplaintUiState.Success("id6969"),viewModelClassUIState)
@@ -236,7 +237,7 @@ class PreviewScreenViewModelTest {
         }
         viewModelClassObject.sendComplain()
 
-        runCurrent()
+      advanceUntilIdle()
 
 
         val errorMessage=message.await()
@@ -276,7 +277,7 @@ class PreviewScreenViewModelTest {
         }
         viewModelClassObject.sendComplain()
 
-        runCurrent()
+        advanceUntilIdle()
 
         val errorMessage=message.await()
         val screenState=viewModelClassObject.uiState.value
