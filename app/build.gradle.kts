@@ -1,8 +1,8 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose") version "2.0.10"
-  //  id("org.jetbrains.kotlin.plugin.compose") version "2.0.21" // ✅ Add this for Kotlin 2.x + Compose
+ //   id("org.jetbrains.kotlin.plugin.compose") version "2.0.10"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.0.21" // ✅ Add this for Kotlin 2.x + Compose
     id("kotlin-kapt") // Room ke liye
     id("com.google.gms.google-services") // Firebase ke liye
     id ("com.google.dagger.hilt.android")
@@ -146,3 +146,9 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
+
+
+configurations.all {
+    exclude(group = "org.junit.jupiter")
+    exclude(group = "org.junit.platform")
+}//Kisi bhi dependency ke through agar JUnit 5 aaye, use project me include mat karo

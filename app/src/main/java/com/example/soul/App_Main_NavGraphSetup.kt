@@ -39,12 +39,10 @@ sealed class AuthScreens(val route: String){
 fun NavGraphSetup(navControllerGraph: NavHostController,modifier: Modifier){
     NavHost(navController = navControllerGraph, startDestination ="login/signup",modifier = modifier ) {
 
-        Log.e("splashView2", "its nav run starting se 🙏")
 
 
         navigation(route = "login/signup", startDestination = AllGraphScreeens1.Splash.route){
 
-            Log.e("splashView2","run the first ")
 
 
                 composable(route = AllGraphScreeens1.Splash.route) {
@@ -59,7 +57,6 @@ because only composable has a valid NavBackStackEntry.
 
                 composable(route = AuthScreens.Login_Screen.route) {
 
-                    Log.e("splashView2","run the login composable")
                     val viewLogin:LoginViewModel= hiltViewModel()
                     LoginScreen(navControllerGraph, viewLogin)
                 }

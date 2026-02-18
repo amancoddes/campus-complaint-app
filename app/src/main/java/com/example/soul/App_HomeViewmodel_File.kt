@@ -1,6 +1,5 @@
 package com.example.soul
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.cachedIn
@@ -13,20 +12,10 @@ import javax.inject.Inject
 
 
 @HiltViewModel
-class Homeviewmodel @Inject constructor(private val repository: FirstAppModuleRepository, private val userRepoComplint:ReportsRepoRoom,
+class Homeviewmodel @Inject constructor(private val repository: FirstAppModuleRepository,
                                              private val userProfileDataRepo:UserProfileDataRepo
 ): ViewModel(){
 
-
-    init {
-        viewModelScope.launch(Dispatchers.IO) {
-            userRepoComplint.checkUidCompalints()
-        }
-        Log.e("runroom ","room check start ")
-        viewModelScope.launch(Dispatchers.IO) {
-            userProfileDataRepo.checkAndFetch()
-        }
-    }
 
 
 

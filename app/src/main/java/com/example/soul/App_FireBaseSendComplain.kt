@@ -11,8 +11,7 @@ import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 
 
-//,private val storage: FirebaseStorage
-//,image:Uri
+// send complaint to backend repo
 class FirstAppModuleRepository @Inject constructor(private val firebase:FirebaseFirestore,private val auth:FirebaseAuth){
     suspend fun sendComplain(data: FirstAppFireStoreDataClass): Result<String>{
         return try {
@@ -28,8 +27,7 @@ class FirstAppModuleRepository @Inject constructor(private val firebase:Firebase
                 //.id = add record primary key
                 docRef.set(complaintData)// set() jo id hai usme saved the data
                     // colleciton mei data add karega
-                    .await()// ye code excicutaiton rok kar rakhe ga agar kamm nhii hua ho to
-// ye kuch return nhi karte agar error aya to catch block run hoga or agar sab aache se hogaya to //  Result.success("its sucess ") ye run hoga or return hoga
+                    .await()//stop the code execution
                 Result.success(docRef.id)
             }
         }catch (e: TimeoutCancellationException){

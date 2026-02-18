@@ -50,8 +50,8 @@ fun ComplaintDetailScreen(
         when {
             loading -> CustomLoadingScreen(padding = padding)
 
-            complaint != null -> DetailBody(complaint!!, padding)
-
+            complaint != null -> ComplaintCard(item = complaint!!, onClick = { navHostController.popBackStack()}, message = "back", padding = padding)
+//DetailBody(complaint!!, padding)
             else -> Text("Complaint not found")
         }
     }

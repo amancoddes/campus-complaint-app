@@ -11,13 +11,11 @@ import androidx.navigation.navigation
 fun NavGraphBuilder.reportGraph(navHostController: NavHostController){
 
     navigation(route = AllRoute.ReportList.route, startDestination = AllGraphScreeens1.Report.route){
-println(" run report graph ")
 
 
 
         composable(route=AllGraphScreeens1.Report.route){entry ->
             val view:ReportListViewmodel= hiltViewModel(entry)
-            Log.e("NAV", "VM attached to -> ${entry.destination.route}")
             AllListReports(view,navHostController)
         }
 

@@ -23,7 +23,6 @@ fun NavGraphBuilder.homeGraph(navControllerGraph: NavHostController) {
     ) {
         composable(route = AllGraphScreeens1.Home.route) {
             val view: Homeviewmodel = hiltViewModel()
-            Log.d("HomeGraph", "Loaded Home_Screen route!")
             Home_Screen(navHostController = navControllerGraph, viewModel = view)
         }
 

@@ -72,7 +72,7 @@ class PreviewScreenViewModelClass @Inject constructor(private val repository: Fi
     }
 
 
-    private val _snackbarEvent = MutableSharedFlow<String>()
+    private val _snackbarEvent = MutableSharedFlow<String>(extraBufferCapacity = 1, replay = 0)
     val snackbarEvent = _snackbarEvent
 
     private val _uiState = MutableStateFlow<ComplaintUiState>(ComplaintUiState.Idle)
@@ -201,7 +201,9 @@ class PreviewScreenViewModelClass @Inject constructor(private val repository: Fi
                     }
 
 
+
                     val result = withContext(ioDispatcher) {
+                        println("send complain 🎃")
                         repository.sendComplain(dataComplain)
                     }
 
@@ -216,8 +218,8 @@ class PreviewScreenViewModelClass @Inject constructor(private val repository: Fi
                         onFailure = { e ->
 
                             _uiState.value = ComplaintUiState.Idle
-                            _snackbarEvent.emit("error : $e")
-
+                            _snackbarEvent.emit(e.message?:"something wrong")
+                            print(" backend fail 🎃")
                             return@launch
                         }
                     )
@@ -388,18 +390,24 @@ val check = checkBuilding(location = loc, building = _building.value, buildNotMa
 
             if(hashInside==null) {
                 _uiState.value = ComplaintUiState.Idle
+                _snackbarEvent.emit("something wrong")
                 return@launch
             }
             val tilesBackendInsideComplaint = withContext(ioDispatcher) {
-
                     userRepoComplint.fetchInsideTileKeys(hash = hashInside)
-
-
             }
 
 
-            val decisionInside= validateInsideOldComplaints(old = tilesBackendInsideComplaint)
-
+        val decisionInside=tilesBackendInsideComplaint.fold(
+            onSuccess = { oldComplaint->
+                validateInsideOldComplaints(old = oldComplaint)
+            },
+            onFailure = {
+                _uiState.value=ComplaintUiState.Idle
+                _snackbarEvent.emit(it.message?:"some thing wrong")
+                return@launch
+            }
+        )
 
             when(decisionInside){
                 DecisionInside.Accept->{

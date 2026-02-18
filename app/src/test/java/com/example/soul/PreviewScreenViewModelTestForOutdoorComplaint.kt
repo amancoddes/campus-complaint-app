@@ -37,7 +37,6 @@ class PreviewScreenViewModelTest {
         repository= mockk(name="send repository")
         roomRepository= mockk(name = "id fetch ",relaxed = true)
         fetchRepository= mockk(name = "fetch location")
-        //locationValidator=LocationValidator()
         locationValidator= mockk(name="location validator",relaxed = true)
         fakeLocation = mockk<Location>()// <- mockk Location class
     }
@@ -130,12 +129,9 @@ class PreviewScreenViewModelTest {
     fun fetchLocation_WhenLocationValidationFailsDueToAccuracyLow_ShouldShowIdleScreenWithErrorMessage()= runTest{
         dispatcher= StandardTestDispatcher(testScheduler)
         val viewModelObject=PreviewScreenViewModelClass(repository,roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
-
         viewModelObject.updateComplain("water leakage")
         // accuracy greater than 18f
         setFakeLocation(lat = 23.45795, lng = 88.03848, accuracy = 20f)
-
-
         coEvery { fetchRepository.fetch(any(),any()) } answers {
             val block=arg<(Location?)-> Unit>(0)
             block(fakeLocation)
@@ -145,11 +141,9 @@ class PreviewScreenViewModelTest {
             val block=arg<()->Unit>(3)
             block()
         }
-
         val message=this.async {
             viewModelObject.snackbarEvent.first()
         }
-
         val isInside=false
         viewModelObject.fetchLocation(isInside)
 
@@ -221,7 +215,7 @@ class PreviewScreenViewModelTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun sendComplain_WhenComplainTileIsEmpty_ShouldShowIdleScreenWithErrorMessage()= runTest{
+    fun sendComplain_WhenComplainTitleIsEmpty_ShouldShowIdleScreenWithErrorMessage()= runTest{
         dispatcher= StandardTestDispatcher(testScheduler)// attach test scheduler with the test dispatcher
 
         val viewModelClassObject=PreviewScreenViewModelClass(repository,roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
@@ -288,6 +282,42 @@ class PreviewScreenViewModelTest {
     }
 
 
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun sendComplaint_WhenComplaintSendingFails_ShouldShowIdleScreenWithErrorMessage() = runTest {
+        dispatcher= StandardTestDispatcher(testScheduler)
+        val viewModelClassObject=PreviewScreenViewModelClass(repository,roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
+
+        viewModelClassObject.updateComplain("water leakage")
+        setFakeLocation(lat = 23.45795, lng = 88.03848, accuracy = 10f)
+
+        coEvery { repository.sendComplain(any()) } returns Result.failure(Exception("time out internet slow try again"))
+        coEvery { fetchRepository.fetch(any(),any()) } answers {
+            val block=arg<(Location?)->Unit>(0)
+            block(fakeLocation)
+        }
+        every { locationValidator.validate(any(),any(),any(),any()) } answers {
+            val block= arg<(Location,Boolean)-> Unit>(1)
+            block(fakeLocation,false)
+        }
+        coEvery { roomRepository.fetchComplaints(any(),any()) } returns Result.success(emptyList())
+
+        val isInside=false
+        viewModelClassObject.fetchLocation(isInside)
+        val message=async {
+            viewModelClassObject.snackbarEvent.first()
+        }
+        viewModelClassObject.sendComplain()
+
+        advanceUntilIdle()
+
+        val errorMessage=message.await()
+        val screenState=viewModelClassObject.uiState.value
+        assertEquals("time out internet slow try again",errorMessage)
+        assertEquals(ComplaintUiState.Idle,screenState)
+        coVerify { repository.sendComplain(any()) }
+    }
 
 
 

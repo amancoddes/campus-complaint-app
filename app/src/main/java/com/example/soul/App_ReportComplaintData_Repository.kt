@@ -1,97 +1,126 @@
 package com.example.soul
 
+import android.os.Message
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-class ReportsRepoRoom @Inject constructor (private val dao: ComplaintDataRoom.ComplaintDao,private val auth: FirebaseAuth,private val firebase: ReportsRepoFirebase,private val mutex: Mutex){
+class ReportsRepoRoom @Inject constructor (private val dao: ComplaintDataRoom.ComplaintDao
+,private val auth: FirebaseAuth,private val firebase: ReportsRepoFirebase,private val mutex: Mutex) {
 
 
-   suspend fun fetchComplaints(hash:List<String>,cutoffTime: Long):Result<List<FirstAppFireStoreDataClass>>{
-         return firebase.fetchComplaintFromBackend(hash,cutoffTime)
+    suspend fun fetchComplaints(
+        hash: List<String>,
+        cutoffTime: Long
+    ): Result<List<FirstAppFireStoreDataClass>> {
+        return firebase.fetchComplaintFromBackend(hash, cutoffTime)
     }
 
-    suspend fun fetchInsideTileKeys(hash:String):List<FirstAppFireStoreDataClass>{
+    suspend fun fetchInsideTileKeys(hash: String): Result<List<FirstAppFireStoreDataClass>> {
         return firebase.fetchTileKyesInside(hash)
     }
 
 
-
     private suspend fun currentUid(): String? =
         uidFlow.firstOrNull()
-    init {
-        Log.e("Repo", "ReportsRepoRoom created 🦋🦋☘️🦋🦋")
-    }
-    //  checkAndFetch()
-    //checkUidCompalints()
-    suspend fun checkUidCompalints() = mutex.withLock {// ye withLock{} block one by one run hoge or enke andar ke code bhi
-        val userUid = currentUid() ?: return
 
-        if (dao.countUserComplaints(userUid) == 0) {
-            Log.e("room","room se fetch ☘️")
-            when (val result = firebase.fetchComplaint(userUid)) {
-                is ComplaintFetchResult2.NotFound -> {
-                    Log.e("runroom", "check not found case")
-                }
-                is ComplaintFetchResult2.Error -> {
-                    Log.e("runroom", "check method error ${result.exception.message}")
-                }
-                is ComplaintFetchResult2.Success -> {
-                    dao.insertAll(result.data)
-                }
+
+    suspend fun checkUidCompalints(): ComplaintResultInList = withContext(Dispatchers.IO) {// withContext use is there optional because firebase and room can support suspend concept
+        mutex.withLock {
+            Log.e("success34", "run repo ")
+            val userUid = currentUid() ?: return@withLock ComplaintResultInList.Login
+            if (dao.countUserComplaints(userUid) > 0) {
+                Log.e("success34", "run after check2 ")
+                return@withLock ComplaintResultInList.Success
             }
+            Log.e("success34", "run after check ")
+
+            return@withLock when (val result = firebase.fetchAllUserComplaints(userUid)) {
+                is ComplaintFetchResultInList.Success -> {
+                    dao.insertAll(result.data)
+                    ComplaintResultInList.Success
+                }
+
+                is ComplaintFetchResultInList.Error -> {
+                    ComplaintResultInList.Error(message = result.error)
+                }
+
+                ComplaintFetchResultInList.NotFound -> {
+                    ComplaintResultInList.NotFound
+                }
+
+
+            }
+
         }
+
     }
 
-
-
-
-
-//    fun observeUserComplaints(userUid:String): Flow<List<ComplaintDataRoom.ComplaintEntity>> {
-//        Log.e("room"," user id - > $userUid")
-//        return dao.observeComplaints(userUid)
-//    }
-
-     suspend fun observeUserOneComplaints(id:String): ComplaintDataRoom.ComplaintEntity?{
+    suspend fun observeUserOneComplaints(id: String): ComplaintDataRoom.ComplaintEntity? {
         return dao.getComplaint(id)
     }
 
     suspend fun fetchNewComplaint(id: String) = mutex.withLock {// add update when make admin app
         when (val result = firebase.fetchSingleComplaint(id)) {
-            is ComplaintFetchResult3.Success -> {
+            is ComplaintFetchResult.Success -> {
                 dao.insertComplaint(result.data)
             }
-            is ComplaintFetchResult3.Error -> {
+
+            is ComplaintFetchResult.Error -> {
 
             }
-            is ComplaintFetchResult3.NotFound -> {
+
+            is ComplaintFetchResult.NotFound -> {
 
             }
         }
 
     }
-    fun observeUserComplaints():  Flow<List<ComplaintDataRoom.ComplaintEntity>> =
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun observeUserComplaints(): Flow<ComplaintUiStates> =
         uidFlow
             .filterNotNull()
             .distinctUntilChanged()
             .flatMapLatest { userUid ->
-                dao.observeComplaints(userUid) .distinctUntilChanged()
+                dao.observeComplaints(userUid).distinctUntilChanged()
+                    .map { list ->
+                        if (list.isEmpty()) {
+                            Log.e("success34", "empty run")
+                            ComplaintUiStates.Empty
+                        } else {
+                            Log.e("success34", "success run")
+                            ComplaintUiStates.Success(list)
+                        }
+                    }
+                    .onStart {
+                        emit(ComplaintUiStates.Loading)
+                    }
+                    .catch { e ->
+                        Log.e("success34", "error run")
+                        emit(ComplaintUiStates.Error(e.message ?: "Something went wrong"))
+                    }
             }
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -115,5 +144,20 @@ class ReportsRepoRoom @Inject constructor (private val dao: ComplaintDataRoom.Co
                 replay = 1
             )
 
+}
 
+sealed class ComplaintUiStates {
+    data object Loading : ComplaintUiStates()
+    data class Success(val data: List<ComplaintDataRoom.ComplaintEntity>) : ComplaintUiStates()
+    data class Error(val message: String) : ComplaintUiStates()
+    data object Empty : ComplaintUiStates()
+}
+
+
+sealed class ComplaintResultInList {
+    data object Success : ComplaintResultInList()
+    data class Error(val message: String) : ComplaintResultInList()
+    data object Login:ComplaintResultInList()
+    data object NotFetch:ComplaintResultInList()
+    data object NotFound:ComplaintResultInList()
 }

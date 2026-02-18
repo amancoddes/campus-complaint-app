@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,13 +27,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
+import javax.annotation.meta.When
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun profileScreen(viewModel: UserProfileViewModel,navHostController: NavHostController){
 // splash ka logic use karo future mei
     val auth = FirebaseAuth.getInstance()
+    val profileState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
         if (auth.currentUser == null) {
@@ -51,43 +53,71 @@ fun profileScreen(viewModel: UserProfileViewModel,navHostController: NavHostCont
                 onBackClick = { navHostController.popBackStack() }
             )
         }) {paddingValues ->
-            Column(modifier = Modifier
-                .fillMaxSize()
-                .background(color = MaterialTheme.colorScheme.onPrimary).padding(paddingValues)){
 
-                val data by viewModel.user.collectAsState()
+            when(profileState){
+                is CombineProfileFetchState.Loading ->{
+                    LoadingShimmer(paddingValues)
+                }
+                is CombineProfileFetchState.Login -> {
+                    LoginMethod(error = "first login ", padding = paddingValues)
+                }
+                is CombineProfileFetchState.Error -> {
+                    ErrorMethod(error = (profileState as CombineProfileFetchState.Error).errorMessage, padding = paddingValues, navHostController = navHostController, onClick = {viewModel.fetchProfileAfterLoginAndSignUp()} )
+                }
+                is CombineProfileFetchState.Success -> {
+                    UserProfileCard((profileState as CombineProfileFetchState.Success).data,navHostController, viewModel = viewModel,paddingValues)
+                }
 
-                UserDetailUI(data,navHostController,viewModel)
+                is CombineProfileFetchState.Empty -> {
+                    AddMethod(error = "add profile",paddingValues)
+                }
             }
+
+
+
+
+
+
+
+
+//            Column(modifier = Modifier
+//                .fillMaxSize()
+//                .background(color = MaterialTheme.colorScheme.onPrimary).padding(paddingValues)){
+//
+//                val data by viewModel.user.collectAsState()
+//
+//                UserDetailUI(data,navHostController,viewModel,paddingValues)
+//            }
         }
     }
+
 }
 
+//
+//@Composable
+//fun UserDetailUI(user: ProfileRoom.ProfileEntity?,navHostController: NavHostController,viewModel: UserProfileViewModel,padding: PaddingValues) {
+//
+//    when {
+//        user == null -> {
+//
+//            LoadingShimmer(padding)
+//        }
+//
+//        else -> {
+//            UserProfileCard(user,navHostController, viewModel = viewModel)
+//        }
+//    }
+//}
 
 @Composable
-fun UserDetailUI(user: ProfileRoom.ProfileEntity?,navHostController: NavHostController,viewModel: UserProfileViewModel) {
-
-    when {
-        user == null -> {
-
-            LoadingShimmer(navHostController)
-        }
-
-        else -> {
-            UserProfileCard(user,navHostController, viewModel = viewModel)
-        }
-    }
-}
-
-@Composable
-fun LoadingShimmer(navHostController: NavHostController) {
+fun LoadingShimmer(padding:PaddingValues) {
     Column(
         modifier = Modifier.padding(20.dp)
     ) {
         Box(
             modifier = Modifier
                 .height(80.dp)
-                .fillMaxWidth()
+                .fillMaxWidth().padding(padding)
                 .shimmerEffect() // Custom shimmer modifier
         )
         Spacer(Modifier.height(12.dp))
@@ -97,7 +127,7 @@ fun LoadingShimmer(navHostController: NavHostController) {
                 .fillMaxWidth(0.5f)
                 .shimmerEffect()// extension funcition for increase readeabilty
         )
-        Spacer(modifier =Modifier.height(50.dp))
+       // Spacer(modifier =Modifier.height(50.dp))
 //        Button(onClick = {
 //            navHostController.popBackStack()
 //        }) {
@@ -112,10 +142,10 @@ fun Modifier.shimmerEffect(): Modifier = composed {
 
 
 @Composable
-fun UserProfileCard(user: ProfileRoom.ProfileEntity,navHostController: NavHostController,viewModel: UserProfileViewModel) {
+fun UserProfileCard(user: ProfileRoom.ProfileEntity,navHostController: NavHostController,viewModel: UserProfileViewModel,padding: PaddingValues) {
 
     Column(
-        modifier = Modifier
+        modifier = Modifier.padding(padding)
             .padding(20.dp)
             .fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center
     ) {
