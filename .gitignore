@@ -33,10 +33,11 @@ google-services.json
 # Android Profiling
 *.hprof
 
-
+app/src/main/java/com/example/soul/*Demo*.kt
 # Ignore test folders
 app/src/androidTest/
+app/src/test/java/com/example/soul/*Demo*.kt
 #app/src/test/
 
 #ignore Demo files
-app/src/main/java/com/example/soul/*Demo*.kt
+#https://github.com/amancoddes/campus-complaint-app/blob/main/app/src/test/java/com/example/soul/PreviewScreenViewModelTestForOutdoorComplaint.kt

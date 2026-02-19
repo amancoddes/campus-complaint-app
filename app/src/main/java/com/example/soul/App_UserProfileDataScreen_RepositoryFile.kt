@@ -21,6 +21,34 @@ import javax.inject.Inject
 class UserProfileDataRepo @Inject constructor (private val dao:ProfileRoom.ProfileQueries,private val auth:FirebaseAuth,private val fireRepo:UserProfileDataFirebaseRepository,private val mutex: Mutex,private val dao2: ComplaintDataRoom.ComplaintDao
 ,private val repo:ReportsRepoRoom){
 
+
+
+    suspend fun checkAndFetch():UserProfileDataStateRepository=withContext(context = Dispatchers.IO) {
+        mutex.withLock {
+
+
+            val uid = currentUid() ?: return@withLock UserProfileDataStateRepository.Login
+
+            dao.getUser(uid) ?: return@withLock when (val result = fireRepo.userDataProfileFetch(uid)) {
+                is UserProfileData.Success -> {
+                    dao.insertProfile(dataProfile = result.data.toEntity(uid))
+                    UserProfileDataStateRepository.Success
+                }
+
+                is UserProfileData.NotFound -> {
+                    UserProfileDataStateRepository.NotFound("user data not found add user data")
+                }
+
+                is UserProfileData.Error -> {
+                    UserProfileDataStateRepository.Error(result.exception.message ?: "something wrong")
+                }
+            }
+            return@withLock UserProfileDataStateRepository.Success
+        }
+
+    }
+
+
     @OptIn(ExperimentalCoroutinesApi::class)
     fun observeUser(): Flow<ProfileFetchRoom> =
         repo.uidFlow
@@ -70,30 +98,6 @@ but system extra kaam karega jo bilkul unnecessary hai.
     }
 
 
-    suspend fun checkAndFetch():UserProfileDataStateRepository=withContext(context = Dispatchers.IO) {
-        mutex.withLock {
-
-
-        val uid = currentUid() ?: return@withLock UserProfileDataStateRepository.Login
-
-        dao.getUser(uid) ?: return@withLock when (val result = fireRepo.userDataProfileFetch(uid)) {
-            is UserProfileData.Success -> {
-                dao.insertProfile(dataProfile = result.data.toEntity(uid))
-                UserProfileDataStateRepository.Success
-            }
-
-            is UserProfileData.NotFound -> {
-                UserProfileDataStateRepository.NotFound("user data not found add user data")
-            }
-
-            is UserProfileData.Error -> {
-                UserProfileDataStateRepository.Error(result.exception.message ?: "something wrong")
-            }
-        }
-        return@withLock UserProfileDataStateRepository.Success
-    }
-
-    }
 
 
 }

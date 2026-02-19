@@ -136,6 +136,7 @@ fun LoadingShimmer(padding:PaddingValues) {
     }
 }
 
+
 fun Modifier.shimmerEffect(): Modifier = composed {
     this.background(Color.LightGray.copy(alpha = 0.3f))
 }
@@ -162,7 +163,6 @@ fun UserProfileCard(user: ProfileRoom.ProfileEntity,navHostController: NavHostCo
         ProfileField(title = "Branch", value = user.branch)
     }
 
-Spacer(modifier = Modifier.height(40.dp))
     Button(
         onClick = {
             Log.e("VM", "Logout button clicked")
