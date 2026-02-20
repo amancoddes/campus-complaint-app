@@ -86,7 +86,8 @@ Parent Navigation Graph | MainNavGraphSetup.kt
 ## Specific Screen Navigation Graph
 ```
 
-| Screens                | child Nav graphs               |
+| Screens                |  child Nav graphs               |
+|_________________________________________________________|
 | Home                   | ChildHomeNavigationGraph.kt    |
 | Profile Screen         | ChildProfileNavigationGraph.kt |
 | User Complaints Screen | ChildUserComplaintsGraph.kt    |
