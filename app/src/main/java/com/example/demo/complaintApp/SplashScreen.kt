@@ -1,4 +1,4 @@
-package com.example.soul
+package com.example.demo.complaintApp
 
 import android.util.Log
 import androidx.compose.foundation.Image
@@ -21,10 +21,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.demo.complaintApp.AllGraphScreeens1
 import kotlinx.coroutines.delay
 
 @Composable
-fun splashDemo(nav: NavHostController, viewModel: SplashViewModel) {
+fun SplashScreen(nav: NavHostController, viewModel: SplashScreenViewModel) {
 
 
 

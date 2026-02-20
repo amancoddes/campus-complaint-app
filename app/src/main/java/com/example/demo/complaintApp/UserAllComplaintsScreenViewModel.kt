@@ -1,25 +1,20 @@
 package com.example.demo.complaintApp
 
 import android.util.Log
-import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
 @HiltViewModel
-class ReportListViewmodel @Inject constructor(private val repo:ReportsRepoRoom, private val userRepoComplint:ReportsRepoRoom):ViewModel(){// esme val hatane ko kah raha hai
+class UserAllComplaintsScreenViewModel @Inject constructor( private val userRepoComplint:UserComplaintsReadRepository):ViewModel(){// esme val hatane ko kah raha hai
 
 
 
@@ -31,9 +26,7 @@ class ReportListViewmodel @Inject constructor(private val repo:ReportsRepoRoom, 
 
 
     fun fetchUserDataAfterLoginAndSignUp(){
-        Log.e("success34","run1 ")
         _userDataScreenState.value=ComplaintSyncState.Loading
-        Log.e("success34","run8 ")
         viewModelScope.launch {
             when(val result=userRepoComplint.checkUidCompalints()){
                 is ComplaintResultInList.Error -> {
@@ -60,7 +53,7 @@ class ReportListViewmodel @Inject constructor(private val repo:ReportsRepoRoom, 
 
 
     val complaints =
-        repo.observeUserComplaints()
+        userRepoComplint.observeUserComplaints()
             .stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(5000),

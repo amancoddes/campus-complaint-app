@@ -1,6 +1,5 @@
 package com.example.demo.complaintApp
 
-import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -22,7 +21,7 @@ fun NavGraphBuilder.homeGraph(navControllerGraph: NavHostController) {
         route = AllRoute.Home.route
     ) {
         composable(route = AllGraphScreeens1.Home.route) {
-            val view: Homeviewmodel = hiltViewModel()
+            val view: HomeScreenViewModel = hiltViewModel()
             Home_Screen(navHostController = navControllerGraph, viewModel = view)
         }
 

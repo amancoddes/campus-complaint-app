@@ -1,4 +1,4 @@
-package com.example.soul
+package com.example.demo.complaintApp
 
 
 sealed class AllGraphScreeens1(val route:String) {

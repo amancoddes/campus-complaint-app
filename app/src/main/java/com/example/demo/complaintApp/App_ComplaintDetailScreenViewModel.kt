@@ -1,4 +1,4 @@
-package com.example.soul
+package com.example.demo.complaintApp
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -10,15 +10,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ComplaintDetailViewModel @Inject constructor(
-    private val repo: ReportsRepoRoom
+    private val repo: UserComplaintsReadRepository
 ) : ViewModel() {
-    init {
-        Log.e("VM", "ReportList VM CREATED -> $this")
-    }
 
-    override fun onCleared() {
-        Log.e("VM", "ReportList VM CLEARED -> $this")
-    }
+
 
     private val _complaint = MutableStateFlow<ComplaintDataRoom.ComplaintEntity?>(null)
     val complaint = _complaint
@@ -29,7 +24,6 @@ class ComplaintDetailViewModel @Inject constructor(
     fun load(id: String) {
         viewModelScope.launch {
             _loading.value = true
-Log.e("run2", "load run ")
             // Fetch from Firestore (latest)
             repo.fetchNewComplaint(id)
 

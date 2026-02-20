@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 
 @Composable
-fun userDataTaken(view: UserDataView,navHostController: NavHostController){
+fun ProfileSetupScreen(view: ProfileSetupScreenViewModel,navHostController: NavHostController){
 
 val screenState=view.state.collectAsState()
 
@@ -61,7 +61,7 @@ val screenState=view.state.collectAsState()
 
 
 @Composable
-fun UserDataMain(view: UserDataView){
+fun UserDataMain(view: ProfileSetupScreenViewModel){
     val state by view.uiData
 
     inputText(value = state.name, label = "enter name") { x -> view.update(set = SetEnum.Name,x)}

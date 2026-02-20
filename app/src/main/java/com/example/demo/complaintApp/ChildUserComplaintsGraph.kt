@@ -7,15 +7,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 
 
-fun NavGraphBuilder.reportGraph(navHostController: NavHostController){
+fun NavGraphBuilder.userComplaintsGraph(navHostController: NavHostController){
 
     navigation(route = AllRoute.ReportList.route, startDestination = AllGraphScreeens1.Report.route){
 
 
 
         composable(route=AllGraphScreeens1.Report.route){entry ->
-            val view:ReportListViewmodel= hiltViewModel(entry)
-            AllListReports(view,navHostController)
+            val view:UserAllComplaintsScreenViewModel= hiltViewModel(entry)
+           UserAllComplaintsScreen(view,navHostController)
         }
 
         composable(

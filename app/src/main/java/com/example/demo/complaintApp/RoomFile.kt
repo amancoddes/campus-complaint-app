@@ -1,4 +1,4 @@
-package com.example.soul
+package com.example.demo.complaintApp
 
 import androidx.room.Dao
 import androidx.room.Database

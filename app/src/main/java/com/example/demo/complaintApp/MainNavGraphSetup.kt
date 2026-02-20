@@ -13,8 +13,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-import com.example.demo.complaintApp.SplashViewModel
-import com.example.demo.complaintApp.splashDemo
+import com.example.demo.complaintApp.SplashScreenViewModel
+import com.example.demo.complaintApp.SplashScreen
 
 
 //subgraph routes
@@ -45,39 +45,39 @@ fun NavGraphSetup(navControllerGraph: NavHostController,modifier: Modifier){
 
 
                 composable(route = AllGraphScreeens1.Splash.route) {
-                    val viewSplash: SplashViewModel = hiltViewModel()
+                    val viewSplash: SplashScreenViewModel = hiltViewModel()
 /*
  ViewModel must be created INSIDE composable { },
 not outside,
 because only composable has a valid NavBackStackEntry.
  */
-                    splashDemo(navControllerGraph, viewSplash)
+                    SplashScreen(navControllerGraph, viewSplash)
                 }
 
                 composable(route = AuthScreens.Login_Screen.route) {
 
-                    val viewLogin:LoginViewModel= hiltViewModel()
+                    val viewLogin:LoginScreenViewModel= hiltViewModel()
                     LoginScreen(navControllerGraph, viewLogin)
                 }
                 composable(route = AuthScreens.SignUp_Screen.route) {
-                    val view: LoginDemoView = hiltViewModel()
-                    SignDemo(navControllerGraph, view)
+                    val view: SignUpScreenViewModel = hiltViewModel()
+                    SignUpScreen(navControllerGraph, view)
 
 
                 }
                 composable(route = AuthScreens.Auth_Verify.route) {
-                    val view: LoginDemoView = hiltViewModel()// do jagah par val view chiye to hum dono jagah par hie bana kar de dege kyu hilt pahle se hie banae or chache mei store loginDemo ka instance dega elsiye dono ke pass hie instance gaya
+                    val view: SignUpScreenViewModel = hiltViewModel()// do jagah par val view chiye to hum dono jagah par hie bana kar de dege kyu hilt pahle se hie banae or chache mei store loginDemo ka instance dega elsiye dono ke pass hie instance gaya
                     VerifyCheck(view, navControllerGraph)
                 }
             composable(route=AuthScreens.Auth_UserData.route){
-                val viewUserData:UserDataView= hiltViewModel()
-                userDataTaken(viewUserData,navControllerGraph)
+                val viewUserData:ProfileSetupScreenViewModel= hiltViewModel()
+                ProfileSetupScreen(viewUserData,navControllerGraph)
             }
             }
         navigation(route = "main_Graph", startDestination = AllRoute.Home.route){
             homeGraph(navControllerGraph = navControllerGraph)
             profileGraph(navProfile = navControllerGraph)
-            reportGraph(navHostController = navControllerGraph)
+            userComplaintsGraph(navHostController = navControllerGraph)
             addReportGraph(navHostController = navControllerGraph)
 
         }

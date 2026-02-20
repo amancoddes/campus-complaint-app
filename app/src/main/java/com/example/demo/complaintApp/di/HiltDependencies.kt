@@ -1,19 +1,19 @@
-package com.example.demo.soul.di
+package com.example.demo.complaintApp.di
 
-//import com.example.soul.ComplaintRepository
+//import  _> ComplaintRepository
 import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.example.soul.AppDataBase
-import com.example.soul.ComplaintDataRoom
-import com.example.soul.FirstAppModuleRepository
-import com.example.soul.LocationValidator
-import com.example.soul.ProfileRoom
-import com.example.soul.ReportsRepoFirebase
-import com.example.soul.ReportsRepoRoom
-import com.example.soul.UserDataRepo
-import com.example.soul.UserProfileDataFirebaseRepository
-import com.example.soul.UserProfileDataRepo
+import com.example.demo.complaintApp.AppDataBase
+import com.example.demo.complaintApp.ComplaintDataRoom
+import com.example.demo.complaintApp.ComplaintSubmissionRepository
+import com.example.demo.complaintApp.LocationValidator
+import com.example.demo.complaintApp.ProfileRoom
+import com.example.demo.complaintApp.ReportsRepoFirebase
+import com.example.demo.complaintApp.UserRepository
+import com.example.demo.complaintApp.UserProfileDataFirebaseRepository
+import com.example.demo.complaintApp.ProfileRepository
+import com.example.demo.complaintApp.UserComplaintsReadRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
@@ -29,7 +29,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object FirebaseModule {
+object HiltDependencies {
 
     @Qualifier
     @Retention(AnnotationRetention.BINARY)
@@ -59,7 +59,7 @@ object FirebaseModule {
 
     @Provides
     @Singleton
-    fun returnRepo(fire:FirebaseFirestore,auth:FirebaseAuth)=FirstAppModuleRepository(fire,auth)
+    fun returnRepo(fire:FirebaseFirestore,auth:FirebaseAuth)=ComplaintSubmissionRepository(fire,auth)
 
 
     @Provides
@@ -69,7 +69,7 @@ object FirebaseModule {
 
     @Provides
     @Singleton
-    fun returnUserDataRepoObj(fire: FirebaseFirestore,auth:FirebaseAuth)=UserDataRepo(fire,auth)
+    fun returnUserRepositoryObj(fire: FirebaseFirestore,auth:FirebaseAuth)=UserRepository(fire,auth)
 
 
 
@@ -105,8 +105,8 @@ object FirebaseModule {
 
     @Provides
     @Singleton
-    fun returnUserProfileDataRepo(dao:ProfileRoom.ProfileQueries,auth: FirebaseAuth,fireRepo:UserProfileDataFirebaseRepository,mutex: Mutex,dao2: ComplaintDataRoom.ComplaintDao, repo:ReportsRepoRoom)=
-        UserProfileDataRepo(dao,auth,fireRepo, mutex,dao2,repo)
+    fun returnUserProfileDataRepo(dao:ProfileRoom.ProfileQueries,fireRepo:UserProfileDataFirebaseRepository,mutex: Mutex,dao2: ComplaintDataRoom.ComplaintDao, repo:UserComplaintsReadRepository)=
+        ProfileRepository(dao, fireRepo, mutex, dao2, repo)
 
 
     @Provides
@@ -116,6 +116,7 @@ object FirebaseModule {
 
     @Provides
     @Singleton
-    fun returnComplaintDao(dao: ComplaintDataRoom.ComplaintDao,auth: FirebaseAuth,fire:ReportsRepoFirebase,mutex: Mutex)=ReportsRepoRoom(dao,auth,fire,mutex)
+    fun returnComplaintDao(dao: ComplaintDataRoom.ComplaintDao,auth: FirebaseAuth,fire:ReportsRepoFirebase,mutex: Mutex)=
+        UserComplaintsReadRepository(dao,auth,fire,mutex)
 
 }

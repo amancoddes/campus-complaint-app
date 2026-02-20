@@ -10,11 +10,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.soul"
+    namespace = "com.example.demo.complaintApp"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.soul"
+        applicationId = "com.example.demo.complaintApp"
         minSdk = 23 // Compose ke liye safe
         targetSdk = 35
         versionCode = 1

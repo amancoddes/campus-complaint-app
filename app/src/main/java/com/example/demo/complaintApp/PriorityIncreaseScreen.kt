@@ -1,4 +1,4 @@
-package com.example.soul
+package com.example.demo.complaintApp
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -15,7 +15,7 @@ import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 
 @Composable
-fun priorityScreen(navigation: NavHostController){
+fun PriorityIncreaseScreen(navigation: NavHostController){
 
     Box(modifier = Modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.background)) {
         Image(

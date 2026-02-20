@@ -1,4 +1,4 @@
-package com.example.soul
+package com.example.demo.complaintApp
 
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -12,7 +12,7 @@ import javax.inject.Inject
 
 
 // send complaint to backend repo
-class FirstAppModuleRepository @Inject constructor(private val firebase:FirebaseFirestore,private val auth:FirebaseAuth){
+class ComplaintSubmissionRepository @Inject constructor(private val firebase:FirebaseFirestore,private val auth:FirebaseAuth){
     suspend fun sendComplain(data: FirstAppFireStoreDataClass): Result<String>{
         return try {
             withTimeout(10_000) {

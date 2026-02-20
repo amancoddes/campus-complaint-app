@@ -60,49 +60,54 @@ Send Complaint
 ## Presentation Layer
 ```
 
-|      feature       |         screen              |          viewModel file             |
+|      feature       |         screen              |          viewModel                  |
 |________________________________________________________________________________________|
 | App Entry/Routing  | SplashScreen.kt              | SplashScreenViewModel.kt           |
 | Authentication     | LoginScreen.kt               | LoginScreenViewModel.kt            |
 | Authentication     | SignUpScreen.kt              | SignUpScreenViewModel.kt           |
-| Email Verification | EmailVerificationScreen.kt   | SignUpScreenViewModel. kt          |
+| Email Verification | EmailVerificationScreen.kt   | SignUpScreenViewModel.kt           |
 | Profile Setup      | ProfileSetupScreen.kt        | ProfileSetupScreenViewModel.kt     |
 | Home               | HomeScreen.kt                | HomeScreenViewModel.kt             |
-| User Complaints    | UserAllComplaintsScreen.kt   | UserComplaintsViewModel.kt         |
+| User Complaints    | UserAllComplaintsScreen.kt   | UserAllComplaintsScreenViewModel.kt|
 | Profile            | ProfileScreen.kt             | ProfileScreenViewModel.kt          |
 | Complaint type     | ComplaintTypeScreen.kt       |                                    |
-| Complaint Preview  | ComplaintPreviewScreen.kt    | ComplaintPreviewScreenViewModel.kt |
+| ComplaintOutdoor Preview  | ComplaintPreviewOutdoorScreen.kt    | ComplaintPreviewScreenViewModel.kt |
+| ComplaintIndoor Preview   | ComplaintPreviewIndoorScreen.kt     | ComplaintPreviewScreenViewModel.kt |
 ```
 
 
+## ViewModel Dependencies
+```
+|     ViewModel                    |       Dependencies            |
+|__________________________________________________________________|
+| SplashScreenViewModel            |  FirebaseAuth                 |
+| LoginScreenViewModel             |  UserAuthRepository           |
+| SignUpScreenViewModel            |  UserAuthRepository           |
+| ProfileSetupScreenViewModel      |  UserRepository               |
+| UserAllComplaintsScreenViewModel |  UserComplaintsReadRepository |
+| ProfileScreenViewModel           |  ProfileRepository            |
+| ComplaintPreviewScreenViewModel  |  ComplaintSubmissionRepository,UserComplaintsReadRepository,LocationFetcher,LocationValidator |
+```
 
 ## Bottom bar and Floating Action Button
 NavigationBottomBarAndFAB.kt
 
+
+
+
+
 ## Navigation Graph
-Parent Navigation Graph | MainNavGraphSetup.kt
-
-## Child Navigation Graph
-## Specific Screen Navigation Graph
 ```
+Parent Navigation Graph ->  MainNavGraphSetup.kt
 
-| Screens                |  child Nav graphs               |
-|_________________________________________________________|
-| Home                   | ChildHomeNavigationGraph.kt    |
-| Profile Screen         | ChildProfileNavigationGraph.kt |
-| User Complaints Screen | ChildUserComplaintsGraph.kt    |
+Child Navigation Graph for specif screen
+| Screens                |  child Nav graphs             |
+|________________________________________________________|
+| Home                   | ChildHomeNavigationGraph      |
+| Profile Screen         | ChildProfileNavigationGraph   |
+| User Complaints Screen | ChildUserComplaintsGraph      |
+| Floating Action Button | ChildAddReportNavigationGraph |
 ```
-
-## Send complaints Sub Navigation Graph
-ChildAddReportNavigationGraph.kt
-
-
-
-
-
-
-
-
 
 
 ## Features

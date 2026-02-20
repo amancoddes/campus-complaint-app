@@ -1,4 +1,4 @@
-package com.example.soul
+package com.example.demo.complaintApp
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.auth.User

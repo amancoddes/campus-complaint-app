@@ -37,7 +37,7 @@ import androidx.navigation.NavHostController
 //        }
 //    }
 @Composable
-fun SignDemo(nav: NavHostController, viewModel: LoginDemoView) {
+fun SignUpScreen(nav: NavHostController, viewModel: SignUpScreenViewModel) {
 
     val state by viewModel.uiState.collectAsState()
     val snackbarHost = remember { SnackbarHostState() }
@@ -105,7 +105,7 @@ fun SignDemo(nav: NavHostController, viewModel: LoginDemoView) {
 }
 
 @Composable
-fun SignupForm(viewModel: LoginDemoView,nav: NavHostController) {
+fun SignupForm(viewModel: SignUpScreenViewModel,nav: NavHostController) {
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
 

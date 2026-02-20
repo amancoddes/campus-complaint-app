@@ -1,4 +1,4 @@
-package com.example.soul
+package com.example.demo.complaintApp
 
 import android.util.Log
 import androidx.compose.foundation.Image
@@ -38,7 +38,6 @@ fun ComplaintDetailScreen(
     val loading by viewModel.loading.collectAsState()
 
     LaunchedEffect(id) {
-        Log.e("run2","its run detail fetching launchedeffect")
         viewModel.load(id)
     }
     Scaffold(topBar = {

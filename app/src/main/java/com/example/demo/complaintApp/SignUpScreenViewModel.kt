@@ -12,8 +12,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 @HiltViewModel
-class LoginDemoView @Inject constructor(
-    private val repo: RepositoryDemo
+class SignUpScreenViewModel @Inject constructor(
+    private val repo: UserAuthRepository
 ) : ViewModel() {
 
     private val _email = mutableStateOf("")

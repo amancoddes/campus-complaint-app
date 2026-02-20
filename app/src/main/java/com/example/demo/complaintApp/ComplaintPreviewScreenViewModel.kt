@@ -6,7 +6,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.demo.complaintApp.di.FirebaseModule
+import com.example.demo.complaintApp.di.HiltDependencies
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
@@ -17,11 +17,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 @HiltViewModel
-class PreviewScreenViewModelClass @Inject constructor(private val repository: FirstAppModuleRepository, private val userRepoComplint:ReportsRepoRoom,
+class ComplaintPreviewScreenViewModel @Inject constructor(private val repository: ComplaintSubmissionRepository, private val userRepoComplint:UserComplaintsReadRepository,
                                              private val fetcher: LocationFetcher, private val validator: LocationValidator
 
-                                             , @FirebaseModule.MainDispatcher private val mainDispatcher: CoroutineDispatcher,
-                                       @FirebaseModule.IoDispatcher private val ioDispatcher: CoroutineDispatcher
+                                             , @HiltDependencies.MainDispatcher private val mainDispatcher: CoroutineDispatcher,
+                                       @HiltDependencies.IoDispatcher private val ioDispatcher: CoroutineDispatcher
 
 ):ViewModel() {
 

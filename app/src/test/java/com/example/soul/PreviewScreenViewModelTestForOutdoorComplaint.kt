@@ -1,6 +1,13 @@
 package com.example.soul
 
 import android.location.Location
+import com.example.demo.complaintApp.ComplaintPreviewScreenViewModel
+import com.example.demo.complaintApp.ComplaintSubmissionRepository
+import com.example.demo.complaintApp.ComplaintUiState
+import com.example.demo.complaintApp.FirstAppFireStoreDataClass
+import com.example.demo.complaintApp.LocationFetcher
+import com.example.demo.complaintApp.LocationValidator
+import com.example.demo.complaintApp.UserComplaintsReadRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -26,9 +33,9 @@ import org.junit.runners.JUnit4
 class PreviewScreenViewModelTest {
     private lateinit var dispatcher: TestDispatcher
     private lateinit var fakeLocation:Location
-    private lateinit var repository: FirstAppModuleRepository
-    private lateinit var roomRepository:ReportsRepoRoom
-    private lateinit var fetchRepository:LocationFetcher
+    private lateinit var repository: ComplaintSubmissionRepository
+    private lateinit var roomRepository: UserComplaintsReadRepository
+    private lateinit var fetchRepository: LocationFetcher
     private lateinit var locationValidator: LocationValidator
 
 
@@ -63,7 +70,7 @@ class PreviewScreenViewModelTest {
     fun fetchLocation_WhenLocationIsNull_ShouldShowIdleScreenWithErrorMessage() = runTest {
         dispatcher= StandardTestDispatcher(testScheduler)
 
-        val viewModelObject=PreviewScreenViewModelClass(repository,roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
+        val viewModelObject= ComplaintPreviewScreenViewModel(repository,roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
 
         val nullLocation=null
         val isInside=false
@@ -96,7 +103,7 @@ class PreviewScreenViewModelTest {
     fun fetchLocation_WhenLocationFetcherFails_ShouldShowIdleScreenWithErrorMessage() = runTest {
 
         dispatcher= StandardTestDispatcher(testScheduler)
-        val viewModelObject=PreviewScreenViewModelClass(repository,roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
+        val viewModelObject=ComplaintPreviewScreenViewModel(repository,roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
 
 
         coEvery { fetchRepository.fetch(any(),any()) } answers {
@@ -128,7 +135,7 @@ class PreviewScreenViewModelTest {
     @Test// test when accuracy low greater than 18f for outdoor complaints
     fun fetchLocation_WhenLocationValidationFailsDueToAccuracyLow_ShouldShowIdleScreenWithErrorMessage()= runTest{
         dispatcher= StandardTestDispatcher(testScheduler)
-        val viewModelObject=PreviewScreenViewModelClass(repository,roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
+        val viewModelObject=ComplaintPreviewScreenViewModel(repository,roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
         viewModelObject.updateComplain("water leakage")
         // accuracy greater than 18f
         setFakeLocation(lat = 23.45795, lng = 88.03848, accuracy = 20f)
@@ -166,7 +173,7 @@ class PreviewScreenViewModelTest {
     fun sendComplain_WhenAllDataValid_ShouldShowSuccessScreen()= runTest {
 
         dispatcher= StandardTestDispatcher(testScheduler)// attach test scheduler with the test dispatcher
-        val viewModelClassObject=PreviewScreenViewModelClass(repository,roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
+        val viewModelClassObject=ComplaintPreviewScreenViewModel(repository,roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
 
 
         // user inputs
@@ -186,7 +193,7 @@ class PreviewScreenViewModelTest {
             block(fakeLocation,false)
         }
 
-        val complaintSlot= slot< FirstAppFireStoreDataClass>()
+        val complaintSlot= slot<FirstAppFireStoreDataClass>()
         coEvery { repository.sendComplain(capture(complaintSlot))// user capture to check right input pass in function or not
         }returns Result.success("id6969")
 
@@ -218,7 +225,7 @@ class PreviewScreenViewModelTest {
     fun sendComplain_WhenComplainTitleIsEmpty_ShouldShowIdleScreenWithErrorMessage()= runTest{
         dispatcher= StandardTestDispatcher(testScheduler)// attach test scheduler with the test dispatcher
 
-        val viewModelClassObject=PreviewScreenViewModelClass(repository,roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
+        val viewModelClassObject=ComplaintPreviewScreenViewModel(repository,roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
 
 
 
@@ -247,7 +254,7 @@ class PreviewScreenViewModelTest {
     @Test
     fun sendComplain_WhenUnableToFetchOldComplaints_ShouldShowIdleScreenWithErrorMessage()= runTest {
         dispatcher= StandardTestDispatcher(testScheduler)
-        val viewModelClassObject=PreviewScreenViewModelClass(repository,roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
+        val viewModelClassObject=ComplaintPreviewScreenViewModel(repository,roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
 
         viewModelClassObject.updateComplain("water leakage")
         setFakeLocation(lat = 23.45795, lng = 88.03848, accuracy = 10f)
@@ -287,7 +294,7 @@ class PreviewScreenViewModelTest {
     @Test
     fun sendComplaint_WhenComplaintSendingFails_ShouldShowIdleScreenWithErrorMessage() = runTest {
         dispatcher= StandardTestDispatcher(testScheduler)
-        val viewModelClassObject=PreviewScreenViewModelClass(repository,roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
+        val viewModelClassObject=ComplaintPreviewScreenViewModel(repository,roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
 
         viewModelClassObject.updateComplain("water leakage")
         setFakeLocation(lat = 23.45795, lng = 88.03848, accuracy = 10f)

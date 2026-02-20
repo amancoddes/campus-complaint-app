@@ -49,7 +49,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -62,10 +61,10 @@ import coil.compose.rememberAsyncImagePainter
 
 
 @Composable
-fun PreviewPage(
+fun ComplaintPreviewOutdoorScreen(
     navHostController: NavHostController,
     imageUri: Uri?,
-    viewModel: PreviewScreenViewModelClass
+    viewModel: ComplaintPreviewScreenViewModel
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -144,7 +143,7 @@ fun PreviewPageContent(
     navHostController: NavHostController,
     imageUri: Uri? = null,
     // ye home ka viewmodel nhi hai preview outside complaint ka hai
-    viewModel:PreviewScreenViewModelClass
+    viewModel:ComplaintPreviewScreenViewModel
 ) {
 
     DisposableEffect(Unit) {

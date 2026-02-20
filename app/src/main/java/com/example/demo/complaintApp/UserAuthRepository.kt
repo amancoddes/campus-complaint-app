@@ -1,4 +1,4 @@
-package com.example.soul
+package com.example.demo.complaintApp
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -6,7 +6,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
-class RepositoryDemo @Inject constructor(val auth:FirebaseAuth,val firestore:FirebaseFirestore){
+class UserAuthRepository @Inject constructor(val auth:FirebaseAuth,val firestore:FirebaseFirestore){
 
    suspend fun singnUpRepo(email:String,password:String):Result<FirebaseUser?>{
        return try {

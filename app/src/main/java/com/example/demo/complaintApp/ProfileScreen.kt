@@ -7,12 +7,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -27,11 +25,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
-import javax.annotation.meta.When
 
 
 @Composable
-fun profileScreen(viewModel: UserProfileViewModel,navHostController: NavHostController){
+fun ProfileScreen(viewModel: ProfileScreenViewModel,navHostController: NavHostController){
 // splash ka logic use karo future mei
     val auth = FirebaseAuth.getInstance()
     val profileState by viewModel.uiState.collectAsState()
@@ -95,7 +92,7 @@ fun profileScreen(viewModel: UserProfileViewModel,navHostController: NavHostCont
 
 //
 //@Composable
-//fun UserDetailUI(user: ProfileRoom.ProfileEntity?,navHostController: NavHostController,viewModel: UserProfileViewModel,padding: PaddingValues) {
+//fun UserDetailUI(user: ProfileRoom.ProfileEntity?,navHostController: NavHostController,viewModel: ProfileScreenViewModel,padding: PaddingValues) {
 //
 //    when {
 //        user == null -> {
@@ -143,7 +140,7 @@ fun Modifier.shimmerEffect(): Modifier = composed {
 
 
 @Composable
-fun UserProfileCard(user: ProfileRoom.ProfileEntity,navHostController: NavHostController,viewModel: UserProfileViewModel,padding: PaddingValues) {
+fun UserProfileCard(user: ProfileRoom.ProfileEntity,navHostController: NavHostController,viewModel: ProfileScreenViewModel,padding: PaddingValues) {
 
     Column(
         modifier = Modifier.padding(padding)

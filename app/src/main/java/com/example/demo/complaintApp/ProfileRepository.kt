@@ -1,8 +1,6 @@
 package com.example.demo.complaintApp
 
 import android.util.Log
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.auth.User
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -18,8 +16,13 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-class UserProfileDataRepo @Inject constructor (private val dao:ProfileRoom.ProfileQueries,private val auth:FirebaseAuth,private val fireRepo:UserProfileDataFirebaseRepository,private val mutex: Mutex,private val dao2: ComplaintDataRoom.ComplaintDao
-,private val repo:ReportsRepoRoom){
+class ProfileRepository @Inject constructor (
+    private val dao: ProfileRoom.ProfileQueries,
+    private val fireRepo: UserProfileDataFirebaseRepository,
+    private val mutex: Mutex,
+    private val dao2: ComplaintDataRoom.ComplaintDao,
+    private val repo: UserComplaintsReadRepository
+){
 
 
 

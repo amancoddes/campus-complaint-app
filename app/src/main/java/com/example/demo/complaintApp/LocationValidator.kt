@@ -1,8 +1,6 @@
-package com.example.soul
+package com.example.demo.complaintApp
 
 import android.location.Location
-import android.location.LocationManager
-import android.util.Log
 import javax.inject.Inject
 
 

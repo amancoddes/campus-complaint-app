@@ -1,13 +1,11 @@
-package com.example.soul;
+package com.example.demo.complaintApp
 
-import android.app.Application;
-import androidx.room.Room
+import android.app.Application
 import com.google.firebase.Firebase
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.MemoryCacheSettings
 import com.google.firebase.firestore.firestore
-import com.google.firebase.firestore.firestoreSettings
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp

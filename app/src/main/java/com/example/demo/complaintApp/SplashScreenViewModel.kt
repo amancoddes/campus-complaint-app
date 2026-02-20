@@ -3,7 +3,7 @@ package com.example.demo.complaintApp
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.soul.AuthScreens
+import com.example.demo.complaintApp.AuthScreens
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 
 @HiltViewModel
-class SplashViewModel @Inject constructor(
+class SplashScreenViewModel @Inject constructor(
     private val auth: FirebaseAuth
 ) : ViewModel() {
 
@@ -23,7 +23,6 @@ class SplashViewModel @Inject constructor(
     val startDestination = _startDestination.asStateFlow()
 
     init {
-        Log.e("splashView"," init of view splash ")
         checkUser()
     }
 

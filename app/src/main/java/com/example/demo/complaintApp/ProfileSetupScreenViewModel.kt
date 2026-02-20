@@ -18,7 +18,7 @@ data class UserData(
 )
 
 @HiltViewModel
-class UserDataView @Inject constructor(private val repo: UserDataRepo, private val profileRepo:UserProfileDataRepo):ViewModel(){
+class ProfileSetupScreenViewModel @Inject constructor(private val repo: UserRepository):ViewModel(){
 
     private val _uiData =mutableStateOf(UserData())
     val uiData:State<UserData> =_uiData
@@ -45,7 +45,7 @@ private val _state=MutableStateFlow<SaveState>(SaveState.Idle)
                     _state.value=SaveState.Success
 
                     // check and call the firebase and fetch user data
-                    profileRepo.checkAndFetch()
+                   // profileRepo.checkAndFetch()
                 },
                 onFailure = { msg->
                     _state.value=SaveState.Error(msg.message?:"unknow error")

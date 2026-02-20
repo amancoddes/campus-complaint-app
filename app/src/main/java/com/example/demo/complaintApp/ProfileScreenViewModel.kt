@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 
 @HiltViewModel
-class UserProfileViewModel @Inject constructor(private val profileRepo: UserProfileDataRepo):ViewModel(){
+class ProfileScreenViewModel @Inject constructor(private val profileRepo: ProfileRepository):ViewModel(){
 
 
 

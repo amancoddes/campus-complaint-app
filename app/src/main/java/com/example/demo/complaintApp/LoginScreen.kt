@@ -28,7 +28,7 @@ import androidx.navigation.NavHostController
 @Composable
 fun LoginScreen(
     nav: NavHostController,
-    viewModel: LoginViewModel
+    viewModel: LoginScreenViewModel
 ) {
 
 
@@ -100,7 +100,7 @@ fun LoginScreen(
 
 
 @Composable
-fun LoginForm(viewModel: LoginViewModel,nav: NavHostController) {
+fun LoginForm(viewModel: LoginScreenViewModel,nav: NavHostController) {
 
     OutlinedTextField(
         value = viewModel.email,

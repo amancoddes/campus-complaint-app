@@ -1,4 +1,4 @@
-package com.example.soul
+package com.example.demo.complaintApp
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -13,9 +13,10 @@ import androidx.navigation.NavHostController
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.rememberAsyncImagePainter
+
 //
 @Composable
-fun SubmitSuccess(navigation:NavHostController,viewModelClass: PreviewScreenViewModelClass){
+fun SubmitSuccess(navigation:NavHostController){
 Box(modifier = Modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.background)) {
     Image(
         painter = rememberAsyncImagePainter(model = R.drawable.image780),

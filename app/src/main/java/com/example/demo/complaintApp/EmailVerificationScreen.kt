@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 
 @Composable
-fun VerifyCheck(view: LoginDemoView, nav: NavHostController) {
+fun VerifyCheck(view: SignUpScreenViewModel, nav: NavHostController) {
 
     val state by view.uiState.collectAsState()
     val snackbar = remember { SnackbarHostState() }

@@ -1,6 +1,7 @@
+//@file:JvmName("ChildUserComplaintsGraphKt")
+
 package com.example.demo.complaintApp
 
-import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -26,10 +27,10 @@ fun NavGraphBuilder.profileGraph(navProfile:NavHostController){
             navDeepLink { uriPattern = "souls://complaint.com/profile" }
         )){
 
-            val view: UserProfileViewModel = hiltViewModel()
+            val view: ProfileScreenViewModel = hiltViewModel()
 
 
-    profileScreen(view,navProfile)
+    ProfileScreen(view,navProfile)
 
         }
     }

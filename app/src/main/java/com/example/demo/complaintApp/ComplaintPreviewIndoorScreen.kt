@@ -1,4 +1,4 @@
-package com.example.soul
+package com.example.demo.complaintApp
 
 import android.Manifest
 import android.content.Context
@@ -58,13 +58,12 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 
-
-@OptIn(ExperimentalMaterial3Api::class)
+//ComplaintPreviewOutdoorScreen
 @Composable
-fun complaintInside(
+fun ComplaintPreviewIndoorScreen(
     navHostController: NavHostController,
     imageUri: Uri?,
-    viewModel: PreviewScreenViewModelClass) {
+    viewModel: ComplaintPreviewScreenViewModel) {
     val state by viewModel.uiState.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -131,7 +130,7 @@ fun complaintInside(
         navHostController: NavHostController,
         imageUri: Uri? = null,
         // ye home ka viewmodel nhi hai preview outside complaint ka hai
-        viewModel: PreviewScreenViewModelClass
+        viewModel: ComplaintPreviewScreenViewModel
     ) {
 
 
