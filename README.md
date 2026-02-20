@@ -22,6 +22,7 @@ LoginScreen
                     ↓
                 Is Verified -> ProfileSetUpScreen -> HomeScreen
 
+
 ## Home Screen Structure
 HomeScreen
 ├── Bottom Navigation Bar
@@ -32,6 +33,26 @@ HomeScreen
 └── Floating Action Button (FAB)
 ↓
 Open Camera
+
+
+## Complaint Reporting flow
+FAB Click
+↓
+Camera Open
+↓
+Picture Captured
+↓
+Complaint Type Selection Screen
+├── Indoor Complaint
+└── Outdoor Complaint
+↓
+Specific Preview Screen
+↓
+Send Complaint
+↓
+├── If New Complaint → SuccessScreen
+└── If Already Exists → PriorityIncreaseScreen
+
 
 
 
