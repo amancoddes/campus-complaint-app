@@ -1,6 +1,41 @@
 # campus-complaint-app
 An Android application for campus students to register and track complaints digitally using Kotlin and Jetpack Compose.
 
+
+
+
+## Authentication Flow
+
+App Launch
+↓
+SplashScreen
+↓
+Check Authentication State
+├── If user already logged in → HomeScreen
+└── If not logged in
+↓
+LoginScreen
+├── Existing user → Login → HomeScreen
+└── New user → SignUpScreen
+                    ↓
+        EmailVerificationScreen
+                    ↓
+                Is Verified -> ProfileSetUpScreen -> HomeScreen
+
+## Home Screen Structure
+HomeScreen
+├── Bottom Navigation Bar
+│      ├── Home Icon → HomeScreen
+│      ├── User Complaints → UserAllComplaintsScreen
+│      └── Profile Icon → ProfileScreen
+│
+└── Floating Action Button (FAB)
+↓
+Open Camera
+
+
+
+
 ## Features
 - User Authentication (Firebase)
 - Location-based complaint validation
