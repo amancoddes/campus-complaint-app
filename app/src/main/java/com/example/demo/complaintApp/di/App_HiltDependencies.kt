@@ -1,4 +1,4 @@
-package com.example.soul.di
+package com.example.demo.soul.di
 
 //import com.example.soul.ComplaintRepository
 import android.content.Context

@@ -1,4 +1,4 @@
-package com.example.soul
+package com.example.demo.soul
 
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver

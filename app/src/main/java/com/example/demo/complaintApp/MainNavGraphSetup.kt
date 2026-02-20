@@ -1,7 +1,6 @@
-package com.example.soul
+package com.example.demo.complaintApp
 
 
-import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FeaturedPlayList
 import androidx.compose.material.icons.filled.Home
@@ -14,8 +13,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-
-
+import com.example.demo.complaintApp.SplashViewModel
+import com.example.demo.complaintApp.splashDemo
 
 
 //subgraph routes
@@ -46,7 +45,7 @@ fun NavGraphSetup(navControllerGraph: NavHostController,modifier: Modifier){
 
 
                 composable(route = AllGraphScreeens1.Splash.route) {
-                    val viewSplash:SplashViewModel= hiltViewModel()
+                    val viewSplash: SplashViewModel = hiltViewModel()
 /*
  ViewModel must be created INSIDE composable { },
 not outside,

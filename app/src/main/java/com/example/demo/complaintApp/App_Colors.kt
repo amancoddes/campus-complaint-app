@@ -1,4 +1,4 @@
-package com.example.soul
+package com.example.demo.soul
 
 
 import androidx.compose.ui.graphics.Color

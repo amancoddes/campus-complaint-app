@@ -1,4 +1,4 @@
-package com.example.soul
+package com.example.demo.complaintApp
 
 import android.provider.Settings
 import android.content.Intent
@@ -76,7 +76,7 @@ fun PreviewPage(
             viewModel.cancel()
         }
     }
-
+Log.e("preview","preview page")
     LaunchedEffect(Unit) {
         viewModel.snackbarEvent.collect{ msg->
             snackbarHostState.showSnackbar(msg)// its say show snackbar 1.
