@@ -53,6 +53,43 @@ Send Complaint
 ├── If New Complaint → SuccessScreen
 └── If Already Exists → PriorityIncreaseScreen
 
+## Presentation Layer
+|      feature       |         screen              |          viewModel file             |
+|________________________________________________________________________________________|
+| App Entry/Routing  | SplashScreen.kt              | SplashScreenViewModel.kt           |
+| Authentication     | LoginScreen.kt               | LoginScreenViewModel.kt            |
+| Authentication     | SignUpScreen.kt              | SignUpScreenViewModel.kt           |
+| Email Verification | EmailVerificationScreen.kt   | SignUpScreenViewModel. kt          |
+| Profile Setup      | ProfileSetupScreen.kt        | ProfileSetupScreenViewModel.kt     |
+| Home               | HomeScreen.kt                | HomeScreenViewModel.kt             |
+| User Complaints    | UserAllComplaintsScreen.kt   | UserComplaintsViewModel.kt         |
+| Profile            | ProfileScreen.kt             | ProfileScreenViewModel.kt          |
+| Complaint type     | ComplaintTypeScreen.kt       |                                    |
+| Complaint Preview  | ComplaintPreviewScreen.kt    | ComplaintPreviewScreenViewModel.kt |
+
+
+
+## Bottom bar and Floating Action Button
+NavigationBottomBarAndFAB.kt
+
+## Navigation Graph
+Parent Navigation Graph | MainNavGraphSetup.kt
+
+## Child Navigation Graph
+## Specific Screen Navigation Graph
+| Screens                | child Nav graphs               |
+| Home                   | ChildHomeNavigationGraph.kt    |
+| Profile Screen         | ChildProfileNavigationGraph.kt |
+| User Complaints Screen | ChildUserComplaintsGraph.kt    |
+
+## Send complaints Sub Navigation Graph
+ChildAddReportNavigationGraph.kt
+
+
+
+
+
+
 
 
 
