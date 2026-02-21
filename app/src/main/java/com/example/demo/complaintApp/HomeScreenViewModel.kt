@@ -25,12 +25,12 @@ class HomeScreenViewModel @Inject constructor(private val repository: ComplaintS
         search.value=input
     }
 
-
-
-    val complaintPagingFlow=
-        repository.getComplaintsPaging()
-            .flow// trigger internally code which code start flow code which observe and emit .load() return data , which call by any pager class method
-            .cachedIn(viewModelScope)
+//
+//
+//    val complaintPagingFlow=
+//        repository.getComplaintsPaging()
+//            .flow// trigger internally code which code start flow code which observe and emit .load() return data , which call by any pager class method
+//            .cachedIn(viewModelScope)
 
 
 }

@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase
 import com.example.demo.complaintApp.AppDataBase
 import com.example.demo.complaintApp.ComplaintDataRoom
 import com.example.demo.complaintApp.ComplaintSubmissionRepository
+import com.example.demo.complaintApp.FireBaseComplaintSubmissionRemoteDataSource
 import com.example.demo.complaintApp.LocationValidator
 import com.example.demo.complaintApp.ProfileRoom
 import com.example.demo.complaintApp.ReportsRepoFirebase
@@ -59,8 +60,12 @@ object HiltDependencies {
 
     @Provides
     @Singleton
-    fun returnRepo(fire:FirebaseFirestore,auth:FirebaseAuth)=ComplaintSubmissionRepository(fire,auth)
+    fun returnRepo(fire:FirebaseFirestore,auth:FirebaseAuth)=
+        FireBaseComplaintSubmissionRemoteDataSource(fire,auth)
 
+    @Provides
+    @Singleton
+    fun returnComplaintSubmissionRepo(backendRepo:FireBaseComplaintSubmissionRemoteDataSource)=ComplaintSubmissionRepository(backendRepo = backendRepo)
 
     @Provides
     @Singleton// live full app life

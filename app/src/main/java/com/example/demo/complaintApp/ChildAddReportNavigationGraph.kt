@@ -84,8 +84,8 @@ composable(
         }
 
         composable(route=AddReportScreens.SubmitSuccess.route){
-            val view:ComplaintPreviewScreenViewModel= hiltViewModel()
-            SubmitSuccess(navHostController)
+          //  val view:ComplaintPreviewScreenViewModel= hiltViewModel()
+            SubmitSuccessScreen(navHostController)
         }
 
 

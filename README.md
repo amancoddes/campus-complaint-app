@@ -69,7 +69,7 @@ Send Complaint
 | Profile Setup      | ProfileSetupScreen.kt        | ProfileSetupScreenViewModel.kt     |
 | Home               | HomeScreen.kt                | HomeScreenViewModel.kt             |
 | User Complaints    | UserAllComplaintsScreen.kt   | UserAllComplaintsScreenViewModel.kt|
-| Profile            | ProfileScreen.kt             | ProfileScreenViewModel.kt          |
+| User Profile       | ProfileScreen.kt             | ProfileScreenViewModel.kt          |
 | Complaint type     | ComplaintTypeScreen.kt       |                                    |
 | ComplaintOutdoor Preview  | ComplaintPreviewOutdoorScreen.kt    | ComplaintPreviewScreenViewModel.kt |
 | ComplaintIndoor Preview   | ComplaintPreviewIndoorScreen.kt     | ComplaintPreviewScreenViewModel.kt |

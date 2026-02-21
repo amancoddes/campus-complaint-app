@@ -16,7 +16,7 @@ import coil.compose.rememberAsyncImagePainter
 
 //
 @Composable
-fun SubmitSuccess(navigation:NavHostController){
+fun SubmitSuccessScreen(navigation:NavHostController){
 Box(modifier = Modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.background)) {
     Image(
         painter = rememberAsyncImagePainter(model = R.drawable.image780),

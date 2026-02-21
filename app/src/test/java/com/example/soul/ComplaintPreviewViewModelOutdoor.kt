@@ -47,9 +47,6 @@ class PreviewScreenViewModelTest {
         locationValidator= mockk(name="location validator",relaxed = true)
         fakeLocation = mockk<Location>()// <- mockk Location class
     }
-
-
-
     private fun setFakeLocation(
         lat: Double,
         lng: Double,
@@ -60,9 +57,6 @@ class PreviewScreenViewModelTest {
         every { fakeLocation.longitude } returns lng
         every { fakeLocation.accuracy } returns accuracy
     }
-
-
-
 //overview
 // fetch -> validate -> viewmodel -> sendComplain() if success -> show Success Screen else show Idle Screen with error message snackBar
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -70,7 +64,8 @@ class PreviewScreenViewModelTest {
     fun fetchLocation_WhenLocationIsNull_ShouldShowIdleScreenWithErrorMessage() = runTest {
         dispatcher= StandardTestDispatcher(testScheduler)
 
-        val viewModelObject= ComplaintPreviewScreenViewModel(repository,roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
+        val viewModelObject= ComplaintPreviewScreenViewModel(repository,
+            roomRepository,fetchRepository,locationValidator,dispatcher,dispatcher)
 
         val nullLocation=null
         val isInside=false
