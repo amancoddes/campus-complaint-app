@@ -123,7 +123,7 @@ class UserComplaintsReadRepository @Inject constructor (private val dao: Complai
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    val uidFlow: SharedFlow<String?> =
+    val uidFlow: Flow<String?> =
         callbackFlow {
             val listener = FirebaseAuth.AuthStateListener { firebase ->
                 trySend(firebase.currentUser?.uid)

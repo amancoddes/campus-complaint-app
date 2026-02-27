@@ -15,19 +15,14 @@ interface ComplaintSubmissionRemoteDataSource{
 class FireBaseComplaintSubmissionRemoteDataSource @Inject constructor(private val firebase: FirebaseFirestore, private val auth: FirebaseAuth
 ):ComplaintSubmissionRemoteDataSource{
     override suspend fun sendComplaint(data: FirstAppFireStoreDataClass): Result<String> {
+        val userId = auth.currentUser?.uid
+            ?: return Result.failure(Exception("User not logged in"))
         return try {
             withTimeout(10_000) {
-                val userId = auth.currentUser?.uid ?: "anonymous"
                 val docRef = firebase.collection("complaints").document()
                 val generatedId = docRef.id
-                val complaintData = data.copy(
-                    userId = userId,
-                    id = generatedId
-                )
-                //document = Firestore new record reference
-                //.id = add record primary key
+                val complaintData = addComplaintId(userId = userId, idComplaint = generatedId, data = data)
                 docRef.set(complaintData)
-
                     .await()//stop the code execution
                 Result.success(docRef.id)
             }
@@ -38,4 +33,9 @@ class FireBaseComplaintSubmissionRemoteDataSource @Inject constructor(private va
             Result.failure(e)
         }
     }
+
+    private fun addComplaintId(userId:String, idComplaint:String, data: FirstAppFireStoreDataClass):FirstAppFireStoreDataClass{
+        return data.copy(id = idComplaint, userId = userId)
+    }
 }
+

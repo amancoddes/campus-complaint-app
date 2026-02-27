@@ -13,8 +13,6 @@ import kotlinx.coroutines.flow.Flow
 
 class ProfileRoom{
 
-
-
     @Entity(tableName = "profile_table")
     data class ProfileEntity (
         @PrimaryKey val uid: String,

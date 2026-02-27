@@ -12,7 +12,7 @@ import com.example.demo.complaintApp.LocationValidator
 import com.example.demo.complaintApp.ProfileRoom
 import com.example.demo.complaintApp.ReportsRepoFirebase
 import com.example.demo.complaintApp.UserRepository
-import com.example.demo.complaintApp.UserProfileDataFirebaseRepository
+import com.example.demo.complaintApp.FireBaseProfileDataFetchRemoteSource
 import com.example.demo.complaintApp.ProfileRepository
 import com.example.demo.complaintApp.UserComplaintsReadRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -105,13 +105,13 @@ object HiltDependencies {
 
     @Provides
     @Singleton
-    fun returnUserDataRepoFirebase(fire: FirebaseFirestore)=UserProfileDataFirebaseRepository(fire)
+    fun returnUserDataRepoFirebase(fire: FirebaseFirestore)=FireBaseProfileDataFetchRemoteSource(fire)
 
 
     @Provides
     @Singleton
-    fun returnUserProfileDataRepo(dao:ProfileRoom.ProfileQueries,fireRepo:UserProfileDataFirebaseRepository,mutex: Mutex,dao2: ComplaintDataRoom.ComplaintDao, repo:UserComplaintsReadRepository)=
-        ProfileRepository(dao, fireRepo, mutex, dao2, repo)
+    fun returnUserProfileDataRepo(dao:ProfileRoom.ProfileQueries,fireRepo:FireBaseProfileDataFetchRemoteSource,mutex: Mutex,dao2: ComplaintDataRoom.ComplaintDao, repo:UserComplaintsReadRepository,@MainDispatcher  mainDispatcher: CoroutineDispatcher,@IoDispatcher ioDispatcher:CoroutineDispatcher)=
+        ProfileRepository(dao, fireRepo, mutex, dao2, repo, mainDispatcher = mainDispatcher, ioDispatcher = ioDispatcher)
 
 
     @Provides

@@ -1,6 +1,8 @@
 package com.example.demo.complaintApp
 
 import android.util.Log
+import com.example.demo.complaintApp.di.HiltDependencies
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -17,24 +19,25 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class ProfileRepository @Inject constructor (
-    private val dao: ProfileRoom.ProfileQueries,
-    private val fireRepo: UserProfileDataFirebaseRepository,
+    private val dao: ProfileRoom.ProfileQueries,// pas proxy class object which implement the Dao interface internally
+    private val fireRepo: ProfileDataFetchRemoteSource,
     private val mutex: Mutex,
     private val dao2: ComplaintDataRoom.ComplaintDao,
-    private val repo: UserComplaintsReadRepository
+    private val repo: UserComplaintsReadRepository,
+    @HiltDependencies.MainDispatcher val mainDispatcher:CoroutineDispatcher,
+    @HiltDependencies.IoDispatcher val ioDispatcher: CoroutineDispatcher
+
 ){
 
 
 
-    suspend fun checkAndFetch():UserProfileDataStateRepository=withContext(context = Dispatchers.IO) {
+    suspend fun fetchProfileData():UserProfileDataStateRepository=withContext(context = ioDispatcher) {
+        val uid = currentUid() ?: return@withContext UserProfileDataStateRepository.Login
         mutex.withLock {
-
-
-            val uid = currentUid() ?: return@withLock UserProfileDataStateRepository.Login
-
-            dao.getUser(uid) ?: return@withLock when (val result = fireRepo.userDataProfileFetch(uid)) {
+            dao.getUser(uid)
+                ?: return@withLock when (val result = fireRepo.userDataProfileFetch(uid)) {
                 is UserProfileData.Success -> {
-                    dao.insertProfile(dataProfile = result.data.toEntity(uid))
+                    dao.insertProfile(dataProfile = result.data.toEntity(uid))// toEntity{} crete entity object
                     UserProfileDataStateRepository.Success
                 }
 
@@ -46,7 +49,7 @@ class ProfileRepository @Inject constructor (
                     UserProfileDataStateRepository.Error(result.exception.message ?: "something wrong")
                 }
             }
-            return@withLock UserProfileDataStateRepository.Success
+            return@withLock UserProfileDataStateRepository.Success// when room is not empty
         }
 
     }
@@ -105,7 +108,7 @@ but system extra kaam karega jo bilkul unnecessary hai.
 
 }
 
-fun UserData.toEntity(uid: String): ProfileRoom.ProfileEntity {
+fun UserData.toEntity(uid: String): ProfileRoom.ProfileEntity {// create Room entity class
     return ProfileRoom.ProfileEntity(
         uid = uid,
         name = this.name,

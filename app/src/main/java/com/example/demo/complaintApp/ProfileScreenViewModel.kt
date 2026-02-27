@@ -29,7 +29,7 @@ class ProfileScreenViewModel @Inject constructor(private val profileRepo: Profil
         _profileFetching.value=ProfileFetchState.Loading
         Log.e("success34","run8 ")
         viewModelScope.launch {
-            when(val result=profileRepo.checkAndFetch()){
+            when(val result=profileRepo.fetchProfileData()){
                 is UserProfileDataStateRepository.Error -> {
                     val message:String = result.error
                     _profileFetching.value=ProfileFetchState.Error(errorMessage = message)
