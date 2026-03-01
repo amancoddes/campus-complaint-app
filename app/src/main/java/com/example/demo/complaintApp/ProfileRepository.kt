@@ -37,7 +37,7 @@ class ProfileRepository @Inject constructor (
             dao.getUser(uid)
                 ?: return@withLock when (val result = fireRepo.userDataProfileFetch(uid)) {
                 is UserProfileData.Success -> {
-                    dao.insertProfile(dataProfile = result.data.toEntity(uid))// toEntity{} crete entity object
+                    dao.insertProfile(dataProfile = result.data.toEntity(uid))// toEntity{} crete entity object / mapping
                     UserProfileDataStateRepository.Success
                 }
 
@@ -108,6 +108,7 @@ but system extra kaam karega jo bilkul unnecessary hai.
 
 }
 
+
 fun UserData.toEntity(uid: String): ProfileRoom.ProfileEntity {// create Room entity class
     return ProfileRoom.ProfileEntity(
         uid = uid,
@@ -117,6 +118,7 @@ fun UserData.toEntity(uid: String): ProfileRoom.ProfileEntity {// create Room en
         branch = this.branch
     )
 }
+
 
 sealed class UserProfileDataStateRepository {
     data class NotFound(val message: String) : UserProfileDataStateRepository()
@@ -132,3 +134,4 @@ sealed class ProfileFetchRoom {
     data class Error(val message: String) : ProfileFetchRoom()
     data object Empty : ProfileFetchRoom()
 }
+

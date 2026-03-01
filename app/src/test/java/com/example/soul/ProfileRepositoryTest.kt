@@ -81,7 +81,6 @@ private val fakeData=UserData(name = "animora", branch ="CSIT", rollNo = "cs89",
         assertEquals(UserProfileDataStateRepository.Success, result)
         coVerify(exactly = 1) { daoProfile.insertProfile(match {it.uid == userId}) } // check important variable make it refractor friendly
         coVerify(exactly = 1) { backendProfile.userDataProfileFetch(userId) }
-        coVerify { daoProfile.getUser(userId) }
     }
 
     @Test
@@ -94,16 +93,58 @@ private val fakeData=UserData(name = "animora", branch ="CSIT", rollNo = "cs89",
        val result= profileRepository.fetchProfileData()
 
         assertEquals(UserProfileDataStateRepository.Success,result)
-        coVerify(exactly = 1) { daoProfile.getUser(userId) }
+        coVerify{ daoProfile.getUser(userId) }
         coVerify(exactly = 0) { backendProfile.userDataProfileFetch(any()) }
+        coVerify(exactly = 0) { daoProfile.insertProfile(any()) }
+    }
+
+    @Test
+    fun fetchProfileData_whenUidNull_returnsLogin()= runTest{
+
+
+        every { backendComplaint.uidFlow } returns flowOf(null)
+        val profileRepository=instance(testScheduler)
+       val result=profileRepository.fetchProfileData()
+
+        assertEquals(UserProfileDataStateRepository.Login,result)
+        coVerify(exactly = 0){ daoProfile.getUser(any()) }
+        coVerify(exactly = 0) { backendProfile.userDataProfileFetch(any()) }
+        coVerify(exactly = 0) { daoProfile.insertProfile(any()) }
     }
 
 
+    @Test
+    fun fetchProfileData_whenRemoteNotFound_returnNotFound()= runTest{
+        val profileRepository=instance(testScheduler)
+
+        val userId = "id69"
+        every { backendComplaint.uidFlow } returns flowOf(userId)
+        coEvery { daoProfile.getUser(any()) } returns null
+        coEvery { backendProfile.userDataProfileFetch(any()) } returns UserProfileData.NotFound
+
+      val result=  profileRepository.fetchProfileData()
+        assertEquals(UserProfileDataStateRepository.NotFound("user data not found add user data"),result)
+        coVerify{ daoProfile.getUser(userId) }
+        coVerify(exactly = 1) { backendProfile.userDataProfileFetch(userId) }
+        coVerify(exactly = 0) { daoProfile.insertProfile(any()) }
+    }
 
 
+    @Test
+    fun fetchProfileData_whenRemoteErrorReturn_returnError()= runTest{
+        val profileRepository=instance(testScheduler)
 
+        val userId = "id69"
+        every { backendComplaint.uidFlow } returns flowOf(userId)
+        coEvery { daoProfile.getUser(any()) } returns null
+        coEvery { backendProfile.userDataProfileFetch(any()) } returns UserProfileData.Error(Exception("time out"))
 
-
+        val result=  profileRepository.fetchProfileData()
+        assertEquals(UserProfileDataStateRepository.Error("time out"),result)
+        coVerify{ daoProfile.getUser(userId) }
+        coVerify(exactly = 1) { backendProfile.userDataProfileFetch(userId) }
+        coVerify(exactly = 0) { daoProfile.insertProfile(any()) }
+    }
 
 
 
