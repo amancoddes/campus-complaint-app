@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.sync.Mutex
@@ -53,37 +54,32 @@ class ProfileRepository @Inject constructor (
         }
 
     }
-
-
+      //  .distinctUntilChanged()//Jab database mein koi change nahi hota //Room Flow zero CPU, zero battery, zero SQL runs
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun observeUser(): Flow<ProfileFetchRoom> =
-        repo.uidFlow
-            .filterNotNull()
+    fun observeUserInfo(): Flow<ProfileFetchRoom> =
+        repo.uidFlow//
             .distinctUntilChanged()
             .flatMapLatest { uid ->
-                dao.observeUser(uid)
-                    .distinctUntilChanged()//Jab database mein koi change nahi hota //Room Flow zero CPU, zero battery, zero SQL runs
-                    .map { list ->
-                        if (list==null) {
-                            Log.e("success34", "empty run")
-                            ProfileFetchRoom.Empty
-                        } else {
-                            Log.e("success34", "success run")
-                            ProfileFetchRoom.Success(list)
+                if(uid==null) { flowOf(ProfileFetchRoom.NotLogin) }
+                else{
+                    dao.observeUser(uid)
+                        .map { list ->
+                            if (list==null) {
+                                ProfileFetchRoom.Empty
+                            } else {  ProfileFetchRoom.Success(list)  }
+                        }.distinctUntilChanged()
+                        .onStart {
+                            emit(ProfileFetchRoom.Loading)
                         }
-                    }
-                    .onStart {
-                        emit(ProfileFetchRoom.Loading)
-                    }
-                    .catch { e ->
-                        Log.e("success34", "error run")
-                        emit(ProfileFetchRoom.Error(e.message ?: "Something went wrong"))
-                    }
+                        .catch { e ->
+                            emit(ProfileFetchRoom.Error(e.message ?: "Something went wrong"))
+                        }
+                }
             }
 
 
     private suspend fun currentUid(): String? =
-        repo.uidFlow.firstOrNull()
+        repo.uidFlow.firstOrNull()// wait and give first value and when its give null and flow not give any value so its simply return the null not throw exception like first()
 /*
 without .distinctUntilChanged
 
@@ -130,8 +126,9 @@ sealed class UserProfileDataStateRepository {
 
 sealed class ProfileFetchRoom {
     data object Loading : ProfileFetchRoom()
-    data class Success(val data: ProfileRoom.ProfileEntity) : ProfileFetchRoom()
+  data  class Success(val data: ProfileRoom.ProfileEntity) : ProfileFetchRoom()
     data class Error(val message: String) : ProfileFetchRoom()
     data object Empty : ProfileFetchRoom()
+    data object NotLogin : ProfileFetchRoom()
 }
 

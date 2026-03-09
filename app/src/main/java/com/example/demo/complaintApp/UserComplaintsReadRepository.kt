@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
@@ -99,49 +100,55 @@ class UserComplaintsReadRepository @Inject constructor (private val dao: Complai
     @OptIn(ExperimentalCoroutinesApi::class)
     fun observeUserComplaints(): Flow<ComplaintUiStates> =
         uidFlow
-            .filterNotNull()
-            .distinctUntilChanged()
-            .flatMapLatest { userUid ->
-                dao.observeComplaints(userUid).distinctUntilChanged()
-                    .map { list ->
+            .distinctUntilChanged()// flat wants lambda returns flow<R> and map only wants R , so you have to manually return flowOf()
+            .flatMapLatest { userUid ->// all extension function return but return type depend on there last expression return type ex: flatMapLatest depend map
+                if(userUid==null) {
+                    flowOf(ComplaintUiStates.NotLogin("not login"))// flowOf for flow create
+                }
+                else{
+                    dao.observeComplaints(userUid as String).map { list ->
                         if (list.isEmpty()) {
-                            Log.e("success34", "empty run")
-                            ComplaintUiStates.Empty
+                            ComplaintUiStates.Empty// lambda return last line return decide when both if else condtions are
                         } else {
-                            Log.e("success34", "success run")
                             ComplaintUiStates.Success(list)
                         }
-                    }
-                    .onStart {
-                        emit(ComplaintUiStates.Loading)
-                    }
-                    .catch { e ->
-                        Log.e("success34", "error run")
-                        emit(ComplaintUiStates.Error(e.message ?: "Something went wrong"))
-                    }
+                    }.distinctUntilChanged()// its full compare not only compare success
+                        .onStart {
+                            emit(ComplaintUiStates.Loading)
+                        }.catch { e ->
+                            emit(ComplaintUiStates.Error(e.message ?: "Something went wrong"))// emit() only emit value in existing flow
+                        }
+                }
             }
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     val uidFlow: Flow<String?> =
         callbackFlow {
-            val listener = FirebaseAuth.AuthStateListener { firebase ->
-                trySend(firebase.currentUser?.uid)
+            Log.e("callBack","run call back")
+            class Hey:FirebaseAuth.AuthStateListener{
+                override fun onAuthStateChanged(auth: FirebaseAuth) {
+                    trySend(auth.currentUser?.uid)
+                }
             }
 
-            auth.addAuthStateListener(listener)
+            val listener=Hey()
 
+//            val listener = FirebaseAuth.AuthStateListener { firebase ->
+//                trySend(firebase.currentUser?.uid)
+//            }
+            auth.addAuthStateListener(listener)// add listener
             awaitClose {
+                Log.e("callBack","remove listener")
                 auth.removeAuthStateListener(listener)
             }
         }
             .distinctUntilChanged()
-            .shareIn(
+            .shareIn(// its use for stop multiple listener
                 scope = appScope,
-                started = SharingStarted.WhileSubscribed(5000),
+                started = SharingStarted.WhileSubscribed(0),
                 replay = 1
             )
-
 }
 
 sealed class ComplaintUiStates {
@@ -149,6 +156,7 @@ sealed class ComplaintUiStates {
     data class Success(val data: List<ComplaintDataRoom.ComplaintEntity>) : ComplaintUiStates()
     data class Error(val message: String) : ComplaintUiStates()
     data object Empty : ComplaintUiStates()
+    data class NotLogin(val message: String):ComplaintUiStates()
 }
 
 

@@ -23,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 
@@ -31,7 +33,9 @@ import com.google.firebase.auth.FirebaseAuth
 fun ProfileScreen(viewModel: ProfileScreenViewModel,navHostController: NavHostController){
 // splash ka logic use karo future mei
     val auth = FirebaseAuth.getInstance()
-    val profileState by viewModel.uiState.collectAsState()
+    val profileState by viewModel.uiState.collectAsStateWithLifecycle(
+        minActiveState = Lifecycle.State.RESUMED
+    )
 
     LaunchedEffect(Unit) {
         if (auth.currentUser == null) {
@@ -158,19 +162,19 @@ fun UserProfileCard(user: ProfileRoom.ProfileEntity,navHostController: NavHostCo
         ProfileField(title = "Roll No", value = user.rollNo)
         ProfileField(title = "Phone", value = user.phone)
         ProfileField(title = "Branch", value = user.branch)
-    }
 
-    Button(
-        onClick = {
-            Log.e("VM", "Logout button clicked")
-            Log.e("NAV2", "Now route = ${navHostController.currentDestination?.route}")
-            FirebaseAuth.getInstance().signOut()
-            Log.e("NAV2", "Now route = ${navHostController.currentDestination?.route}")
-            Log.e("VM", "After signOut -> ${FirebaseAuth.getInstance().currentUser}")
+        Spacer(modifier = Modifier.height(10.dp))
+        Button(
+            onClick = {
+                Log.e("VM", "Logout button clicked")
+                Log.e("NAV2", "Now route = ${navHostController.currentDestination?.route}")
+                FirebaseAuth.getInstance().signOut()
+                Log.e("NAV2", "Now route = ${navHostController.currentDestination?.route}")
+                Log.e("VM", "After signOut -> ${FirebaseAuth.getInstance().currentUser}")
 
 
-            navHostController.navigate("login/signup"){
-                viewModel.logoutDeleteRoom()
+                navHostController.navigate("login/signup"){
+                    viewModel.logoutDeleteRoom()
                     popUpTo("main_Graph") {
                         //Navigation ke liye ye sahi hai
                         //But VM destroy ke liye nahi
@@ -182,10 +186,12 @@ fun UserProfileCard(user: ProfileRoom.ProfileEntity,navHostController: NavHostCo
 
 
 
+            }
+        ) {
+            Text("Log out")
         }
-    ) {
-        Text("Log out")
     }
+
 }
 
 @Composable

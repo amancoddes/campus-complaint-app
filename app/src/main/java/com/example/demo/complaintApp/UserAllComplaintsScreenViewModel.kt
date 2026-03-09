@@ -56,7 +56,7 @@ class UserAllComplaintsScreenViewModel @Inject constructor( private val userRepo
         userRepoComplint.observeUserComplaints()
             .stateIn(
                 viewModelScope,
-                SharingStarted.WhileSubscribed(5000),
+                SharingStarted.WhileSubscribed(0),
                 ComplaintUiStates.Loading
             )
 
@@ -81,6 +81,9 @@ class UserAllComplaintsScreenViewModel @Inject constructor( private val userRepo
             room is ComplaintUiStates.Success -> {
                 Log.e("success34", "success ")
                 CombineState.Success(data = room.data)
+            }
+            room is ComplaintUiStates.NotLogin -> {
+                CombineState.Login
             }
 
             else -> {

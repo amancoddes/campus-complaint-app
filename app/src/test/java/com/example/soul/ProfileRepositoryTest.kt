@@ -1,7 +1,9 @@
 package com.example.soul
 
+import app.cash.turbine.test
 import com.example.demo.complaintApp.ComplaintDataRoom
 import com.example.demo.complaintApp.ProfileDataFetchRemoteSource
+import com.example.demo.complaintApp.ProfileFetchRoom
 import com.example.demo.complaintApp.ProfileRepository
 import com.example.demo.complaintApp.ProfileRoom
 import com.example.demo.complaintApp.UserComplaintsReadRepository
@@ -9,21 +11,27 @@ import com.example.demo.complaintApp.UserData
 import com.example.demo.complaintApp.UserProfileData
 import com.example.demo.complaintApp.UserProfileDataStateRepository
 import com.example.demo.complaintApp.toEntity
+
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.confirmVerified
 import io.mockk.every
+
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -59,7 +67,11 @@ private val fakeData=UserData(name = "animora", branch ="CSIT", rollNo = "cs89",
         )
     }
 
-
+    /***
+     ------------------------------------------------
+     |      fetchProfileData() method tests          |
+     ------------------------------------------------
+    ***/
     @Test
     fun fetchProfileData_whenUserNotInRoom_fetchesFromRemoteAndInsertsIntoRoom() = runTest {
 
@@ -145,6 +157,117 @@ private val fakeData=UserData(name = "animora", branch ="CSIT", rollNo = "cs89",
         coVerify(exactly = 1) { backendProfile.userDataProfileFetch(userId) }
         coVerify(exactly = 0) { daoProfile.insertProfile(any()) }
     }
+
+
+
+
+
+
+
+
+    /***
+    ------------------------------------------------
+    |      observeUserInfo()         |
+    ------------------------------------------------
+     ***/
+
+
+    @Test
+    fun observeUserInfo_whenUserDataNotExist_shouldEmitsLoadingAndEmpty()= runTest{
+        val profileRepository=instance(testScheduler)
+        val userId = "id69"
+        every { backendComplaint.uidFlow } returns flowOf(userId)
+        coEvery { daoProfile.observeUser(any()) } returns flowOf(null)
+        profileRepository.observeUserInfo().test {
+            assertEquals(ProfileFetchRoom.Loading,awaitItem())
+            assertEquals(ProfileFetchRoom.Empty,awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+        coVerify(exactly = 1) { daoProfile.observeUser(uid = userId) }
+    }
+
+
+
+    @Test
+    fun observeInfo_whenUserNotLogin_shouldEmitsNotLogin()= runTest {
+
+        val profileRepository=instance(testScheduler)
+        every { backendComplaint.uidFlow } returns flowOf(null)
+        profileRepository.observeUserInfo().test {
+            assertEquals(ProfileFetchRoom.NotLogin,awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+        coVerify (exactly = 0){ daoProfile.observeUser(any()) }
+    }
+
+    //val dbFlow = MutableSharedFlow<ProfileRoom.ProfileEntity?>(replay = 1)
+    @Test
+    fun observeInfo_whenUserDataExist_shouldEmitsLoadingAndSuccess()= runTest {
+        val profileRepository=instance(testScheduler)
+        val userId = "id69"
+        every { backendComplaint.uidFlow } returns flowOf(userId)
+        coEvery { daoProfile.observeUser(any()) } returns flowOf(ProfileRoom.ProfileEntity(uid = userId) )
+
+        profileRepository.observeUserInfo().onEach { println(" -=-- $it") }.test {
+            assertEquals(ProfileFetchRoom.Loading,awaitItem())
+            val result=awaitItem() as ProfileFetchRoom.Success
+            assertEquals(userId,result.data.uid)
+            cancelAndIgnoreRemainingEvents()
+        }
+        coVerify (exactly = 1){ daoProfile.observeUser(userId) }
+    }
+
+
+    @Test
+    fun observeInfo_whenRoomThrowError_shouldEmitsLoadingAndError()= runTest {
+        val profileRepository=instance(testScheduler)
+        val userId = "id69"
+        every { backendComplaint.uidFlow } returns flowOf(userId)
+        coEvery { daoProfile.observeUser(any()) } returns flow {// use  there flow instead of flowOf because flowOf only emt not throw  error so we manually throw it
+            throw RuntimeException("DB error")
+        }
+
+        profileRepository.observeUserInfo().test {
+            assertTrue(awaitItem() is ProfileFetchRoom.Loading)
+
+            val result =  awaitItem() as ProfileFetchRoom.Error
+            assertEquals("DB error",result.message)
+            cancelAndIgnoreRemainingEvents()
+        }
+        coVerify(exactly = 1){ daoProfile.observeUser(userId) }
+    }
+
+    @Test
+    fun observeInfo_whenSameDataEmitsTwice_shouldEmitsOnlyOnce()= runTest {
+        // This test protects the distinctUntilChanged() behaviour
+    // If distinctUntilChanged() is removed from the repository flow
+    // duplicate Success emissions may occur when Room emits the same entity twice
+    // This test ensures the repository emits Success only once
+        // imp -> make sure use data classes ...
+        val profileRepository=instance(testScheduler)
+        val userId = "id69"
+        every { backendComplaint.uidFlow } returns flowOf(userId)
+        val dbFlow = MutableSharedFlow<ProfileRoom.ProfileEntity?>()
+
+        coEvery { daoProfile.observeUser(any()) } returns dbFlow
+        profileRepository.observeUserInfo().test {
+
+            assertTrue(awaitItem() is ProfileFetchRoom.Loading)// awaitItem() its return the value from turbine queue
+
+            val  entity1=ProfileRoom.ProfileEntity(uid = userId)
+            dbFlow.emit(entity1)
+            assertTrue(awaitItem() is ProfileFetchRoom.Success)
+
+
+            val  entity2=ProfileRoom.ProfileEntity(uid = userId)
+            dbFlow.emit(entity2)
+
+            expectNoEvents()// its check is turbine queue isEmpty
+        }
+        coVerify(exactly = 1){ daoProfile.observeUser(userId) }
+    }
+
+
 
 
 

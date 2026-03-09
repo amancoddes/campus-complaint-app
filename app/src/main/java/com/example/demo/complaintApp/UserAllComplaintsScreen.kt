@@ -32,13 +32,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 
 @Composable
 fun UserAllComplaintsScreen(viewmodel: UserAllComplaintsScreenViewModel,navHostController: NavHostController){
 
-    val statesState by viewmodel.uiState.collectAsState()
+    val statesState by viewmodel.uiState.collectAsStateWithLifecycle(
+        minActiveState = Lifecycle.State.RESUMED
+    )
 
     when(statesState){
         is CombineState.Loading -> {

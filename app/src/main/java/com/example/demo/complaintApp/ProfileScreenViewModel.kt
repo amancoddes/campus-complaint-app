@@ -61,10 +61,10 @@ class ProfileScreenViewModel @Inject constructor(private val profileRepo: Profil
         fetchProfileAfterLoginAndSignUp()
     }
 
-    val user = profileRepo.observeUser()
+    val user = profileRepo.observeUserInfo()
         .stateIn(
             viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
+            SharingStarted.WhileSubscribed(0),
             ProfileFetchRoom.Loading
         )
 
@@ -102,7 +102,12 @@ class ProfileScreenViewModel @Inject constructor(private val profileRepo: Profil
                 Log.e("success34", "success ")
                CombineProfileFetchState.Success(data = room.data)
             }
-
+            room is ProfileFetchRoom.NotLogin -> {
+                CombineProfileFetchState.Login
+            }
+            room is ProfileFetchRoom.Error -> {
+                CombineProfileFetchState.Error(errorMessage = room.message)
+            }
             else -> {
                CombineProfileFetchState.Loading
             }
