@@ -110,7 +110,9 @@ object HiltDependencies {
 
     @Provides
     @Singleton
-    fun returnUserProfileDataRepo(dao:ProfileRoom.ProfileQueries,fireRepo:FireBaseProfileDataFetchRemoteSource,mutex: Mutex,dao2: ComplaintDataRoom.ComplaintDao, repo:UserComplaintsReadRepository,@MainDispatcher  mainDispatcher: CoroutineDispatcher,@IoDispatcher ioDispatcher:CoroutineDispatcher)=
+    fun returnUserProfileDataRepo(dao:ProfileRoom.ProfileQueries,fireRepo:FireBaseProfileDataFetchRemoteSource,
+                                  mutex: Mutex,dao2: ComplaintDataRoom.ComplaintDao, repo:UserComplaintsReadRepository,
+                                  @MainDispatcher  mainDispatcher: CoroutineDispatcher,@IoDispatcher ioDispatcher:CoroutineDispatcher)=
         ProfileRepository(dao, fireRepo, mutex, dao2, repo, mainDispatcher = mainDispatcher, ioDispatcher = ioDispatcher)
 
 

@@ -49,7 +49,7 @@ class ProfileRoom{
 // App
 @Database(entities = [ProfileRoom.ProfileEntity::class,ComplaintDataRoom.ComplaintEntity::class],version=1, exportSchema = false)
 abstract class AppDataBase:RoomDatabase(){
-    abstract fun profileQueries():ProfileRoom.ProfileQueries
+    abstract fun profileQueries():ProfileRoom.ProfileQueries// its return the object which type ProfileQueries so its means it can return the class obejct which implement this
     abstract fun complaintQueries():ComplaintDataRoom.ComplaintDao
 }
 

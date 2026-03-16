@@ -17,7 +17,7 @@ interface  ProfileDataFetchRemoteSource{
 sealed class UserProfileData {
     data class Success(val data:UserData) : UserProfileData()
     data object NotFound : UserProfileData()
-    data class Error(val exception: Exception) : UserProfileData()
+    data class Error(val exception: String) : UserProfileData()
 }
 
 
@@ -32,10 +32,10 @@ class FireBaseProfileDataFetchRemoteSource @Inject constructor( private val fire
             } ?: UserProfileData.NotFound
         }
         catch (e:TimeoutCancellationException){
-             return  UserProfileData.Error(Exception("network slow "))
+             return  UserProfileData.Error(e.message?:"timeout connection")
         }
         catch (e:Exception){
-           return UserProfileData.Error(e)
+           return UserProfileData.Error(e.message?:"something wrong")
         }
 
     }

@@ -133,6 +133,7 @@ dependencies {
     testImplementation("androidx.room:room-testing:2.6.0")
 
     // Testing
+    androidTestImplementation ("app.cash.turbine:turbine:1.0.0")
     testImplementation("app.cash.turbine:turbine:1.0.0")
     testImplementation ("io.mockk:mockk:1.13.10")
     androidTestImplementation ("io.mockk:mockk-android:1.13.10")

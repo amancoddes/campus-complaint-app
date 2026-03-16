@@ -256,7 +256,8 @@ private val fakeData=UserData(name = "animora", branch ="CSIT", rollNo = "cs89",
 
 
     @Test
-    fun observeInfo_whenRoomThrowError_shouldEmitsLoadingAndError()= runTest {// inner room exception wrap so now the upper flow will not terminated
+    fun observeInfo_whenRoomThrowError_shouldEmitsLoadingAndError()= runTest {
+        // this test case protect the behaviour when inner flow crash than upper flow alive
         val profileRepository=instance(testScheduler)
         val userId = "id69"
         every { backendComplaint.uidFlow } returns flowOf(userId)
@@ -303,7 +304,7 @@ private val fakeData=UserData(name = "animora", branch ="CSIT", rollNo = "cs89",
 
 
     @Test
-    fun observerInfo_whenUpdateEmptyRoom_shouldEmitsLoadingEmptyThenSuccess()= runTest {
+    fun observeInfo_whenUpdateEmptyRoom_shouldEmitsLoadingEmptyThenSuccess()= runTest {
         val profileRepository=instance(testScheduler)
         val userId = "id69"
         val dbFlow = MutableSharedFlow<ProfileRoom.ProfileEntity?>()
@@ -328,6 +329,21 @@ private val fakeData=UserData(name = "animora", branch ="CSIT", rollNo = "cs89",
 
     // old cancel test write when use multiple account switching from the profile screen
 
+
+    @Test
+    fun observeInfo_whenCollectorCancel_shouldFlowStop()= runTest {
+        val profileRepository=instance(testScheduler)
+        val userId = "id69"
+        every { backendComplaint.uidFlow } returns flowOf(userId)
+        coEvery { daoProfile.getUser(any()) } returns ProfileRoom.ProfileEntity(uid = userId)
+
+        val job1= launch {
+            profileRepository.observeUserInfo().collect{
+            }
+        }
+        job1.cancel()
+        assertTrue(job1.isCancelled)
+    }
 
 
 

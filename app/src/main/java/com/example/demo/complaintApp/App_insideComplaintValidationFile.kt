@@ -24,14 +24,14 @@ class Location2(
     val accuracy:Float=0f
 )
 
-val DepartmentsBuilding= mapOf( "CSIT" to Zone(latitude =26.50493 , longitude =83.87572, radius = 100f  )
+val DepartmentsBuilding= mapOf( "CSIT" to Zone(latitude =28.36695 , longitude = 79.45638, radius = 400f  )
     ,"ME" to Zone(latitude =26.50551 , longitude =83.87486, radius = 80f  ) ,
     "EE" to Zone(latitude =26.50674 , longitude = 83.87319, radius = 80f ))
 ////fun checkBuilding(location:Location,building:String):Boolean{
 //    return  true
 //}, for testing
 suspend fun checkBuilding(location:Location,building:String, buildNotMatch: suspend (String)->Unit):Boolean{
-    Log.e("checkNL"," check locaiton -> $location")
+    Log.e("checkNL"," check locaiton -> ${location.latitude}")
     val buildingZone= DepartmentsBuilding[building]?: run {
         buildNotMatch("building not present in list")
         return false

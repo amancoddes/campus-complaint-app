@@ -39,7 +39,8 @@ app/src/main/java/com/example/demo/complaintApp/*Demo*.kt
 #ignore Demo files from dependecy
 app/src/main/java/com/example/demo/complaintApp/di/*Demo*.kt
 # Ignore test folders
-app/src/androidTest/
+#app/src/androidTest/
+app/src/androidTest/java/com/example/soul/*Demo*.kt
 app/src/test/java/com/example/soul/*Demo*.kt
 #app/src/test/
 

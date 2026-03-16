@@ -35,11 +35,11 @@ class SplashScreenViewModel @Inject constructor(
                 withTimeout(2000){
                     auth.currentUser?.reload()?.await()
                 }
-            } catch(e: Exception) {
+            } catch(_: Exception) {
+
             }
 
             val user = auth.currentUser
-            Log.e("splashView","check() run ")
             _startDestination.value = when {
                 user == null -> AuthScreens.Login_Screen.route  // not logged in
 

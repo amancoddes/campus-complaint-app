@@ -33,31 +33,28 @@ class ProfileRepository @Inject constructor (
 
 
     suspend fun fetchProfileData():UserProfileDataStateRepository=withContext(context = ioDispatcher) {
-        val uid = currentUid() ?: return@withContext UserProfileDataStateRepository.Login
         mutex.withLock {
+            val uid = currentUid() ?: return@withContext UserProfileDataStateRepository.Login// write there for to stop bug race condition
             dao.getUser(uid)
                 ?: return@withLock when (val result = fireRepo.userDataProfileFetch(uid)) {
                 is UserProfileData.Success -> {
                     dao.insertProfile(dataProfile = result.data.toEntity(uid))// toEntity{} crete entity object / mapping
                     UserProfileDataStateRepository.Success
                 }
-
                 is UserProfileData.NotFound -> {
                     UserProfileDataStateRepository.NotFound("user data not found add user data")
                 }
-
                 is UserProfileData.Error -> {
-                    UserProfileDataStateRepository.Error(result.exception.message ?: "something wrong")
+                    UserProfileDataStateRepository.Error(result.exception)
                 }
             }
             return@withLock UserProfileDataStateRepository.Success// when room is not empty
         }
-
     }
       //  .distinctUntilChanged()//Jab database mein koi change nahi hota //Room Flow zero CPU, zero battery, zero SQL runs
     @OptIn(ExperimentalCoroutinesApi::class)
     fun observeUserInfo(): Flow<ProfileFetchRoom> =
-        repo.uidFlow//
+        repo.uidFlow
             .distinctUntilChanged()
             .flatMapLatest { uid ->
                 if(uid==null) { flowOf(ProfileFetchRoom.NotLogin) }
