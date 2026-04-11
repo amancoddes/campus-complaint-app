@@ -2,8 +2,10 @@
 
 package com.example.demo.complaintApp
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
@@ -19,18 +21,21 @@ sealed class ProfileGraphSealedClass (val route:String, val icon: ImageVector, v
 
 
 
-fun NavGraphBuilder.profileGraph(navProfile:NavHostController){
+fun NavGraphBuilder.profileGraph(navProfile:NavHostController,innerPaddingValues: PaddingValues){
 
     navigation(startDestination = AllGraphScreeens1.Profile.route, route = AllRoute.Profile.route){
 
         composable(route = AllGraphScreeens1.Profile.route, deepLinks = listOf(
             navDeepLink { uriPattern = "souls://complaint.com/profile" }
         )){
+            val parentEntry = remember(navProfile) {
+                navProfile.getBackStackEntry("main_Graph")
+            }
 
-            val view: ProfileScreenViewModel = hiltViewModel()
+            val view: ProfileScreenViewModel= hiltViewModel(parentEntry)
 
 
-    ProfileScreen(view,navProfile)
+    ProfileScreen(view,navProfile, paddingValues = innerPaddingValues)
 
         }
     }

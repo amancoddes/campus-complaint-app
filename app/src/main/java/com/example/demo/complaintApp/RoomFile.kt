@@ -1,5 +1,6 @@
 package com.example.demo.complaintApp
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Entity
@@ -9,6 +10,8 @@ import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
 class ProfileRoom{
@@ -46,8 +49,20 @@ class ProfileRoom{
 
 }
 
-// App
-@Database(entities = [ProfileRoom.ProfileEntity::class,ComplaintDataRoom.ComplaintEntity::class],version=1, exportSchema = false)
+
+val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+
+        db.execSQL(
+            "ALTER TABLE complaints ADD COLUMN updatedTime INTEGER NOT NULL DEFAULT 0"
+        )
+    }
+}
+
+
+
+// version increse for updateTime
+@Database(entities = [ProfileRoom.ProfileEntity::class,ComplaintDataRoom.ComplaintEntity::class],version=2, exportSchema = false)
 abstract class AppDataBase:RoomDatabase(){
     abstract fun profileQueries():ProfileRoom.ProfileQueries// its return the object which type ProfileQueries so its means it can return the class obejct which implement this
     abstract fun complaintQueries():ComplaintDataRoom.ComplaintDao
@@ -56,7 +71,6 @@ abstract class AppDataBase:RoomDatabase(){
 
 
 class ComplaintDataRoom{
-
     @Entity(
         tableName = "complaints",
         indices = [
@@ -70,7 +84,8 @@ class ComplaintDataRoom{
         val timestamp: Long = 0L,
         val address: String = "",
         val status: String = "",
-        val userId: String = ""
+        val userId: String = "",
+        val updatedTime:Long=0L
     )
 
 
@@ -86,10 +101,31 @@ class ComplaintDataRoom{
         @Insert(onConflict = OnConflictStrategy.REPLACE)
         suspend fun insertAll(list: List<ComplaintEntity>)
 
+        @Insert(onConflict = OnConflictStrategy.REPLACE)
+        suspend fun insert(complaint: ComplaintEntity)
+
         // Observe all complaints for a user
         @Query("SELECT * FROM complaints WHERE userId = :uid ORDER BY timestamp DESC")
         fun observeComplaints(uid: String): Flow<List<ComplaintEntity>>
 
+
+        @Query("SELECT * FROM complaints ORDER BY timestamp DESC")
+        fun getRecentComplaints(): PagingSource<Int,ComplaintEntity>
+
+        @Query(" SELECT * FROM complaints ORDER BY timestamp DESC LIMIT 5")
+        fun observeRecentComplaints(): Flow<List<ComplaintEntity>>
+
+        @Query("SELECT * FROM complaints WHERE status = 'PENDING' ORDER BY timestamp DESC")
+        fun getPendingComplaints(): PagingSource<Int, ComplaintEntity>
+
+        @Query("SELECT * FROM complaints WHERE status = 'RESOLVED' ORDER BY timestamp DESC")
+        fun getResolvedComplaints(): PagingSource<Int, ComplaintEntity>
+
+        @Query("SELECT COUNT(*) FROM complaints WHERE status = 'PENDING'")
+        fun observePendingCount(): Flow<Int>
+
+        @Query("SELECT COUNT(*) FROM complaints WHERE status = 'RESOLVED'")
+        fun observeResolvedCount(): Flow<Int>
 
 
         // Insert one complaint
@@ -98,7 +134,8 @@ class ComplaintDataRoom{
 
 
 
-
+        @Query("DELETE FROM complaints WHERE id = :id")
+        suspend fun deleteById(id: String)
 
         // Check if complaint exists
         @Query("SELECT * FROM complaints WHERE id = :id LIMIT 1")

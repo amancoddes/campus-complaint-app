@@ -7,13 +7,17 @@ import androidx.room.RoomDatabase
 import com.example.demo.complaintApp.AppDataBase
 import com.example.demo.complaintApp.ComplaintDataRoom
 import com.example.demo.complaintApp.ComplaintSubmissionRepository
+import com.example.demo.complaintApp.DataStoreManager
 import com.example.demo.complaintApp.FireBaseComplaintSubmissionRemoteDataSource
 import com.example.demo.complaintApp.LocationValidator
 import com.example.demo.complaintApp.ProfileRoom
 import com.example.demo.complaintApp.ReportsRepoFirebase
 import com.example.demo.complaintApp.UserRepository
 import com.example.demo.complaintApp.FireBaseProfileDataFetchRemoteSource
+import com.example.demo.complaintApp.ListenerRepository
+import com.example.demo.complaintApp.MIGRATION_1_2
 import com.example.demo.complaintApp.ProfileRepository
+import com.example.demo.complaintApp.SessionManager
 import com.example.demo.complaintApp.UserComplaintsReadRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -23,7 +27,9 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.sync.Mutex
 import javax.inject.Qualifier
 import javax.inject.Singleton
@@ -83,8 +89,8 @@ object HiltDependencies {
     @Singleton
     fun returnRoomAppDatabaseImplObject(@ApplicationContext context: Context):AppDataBase {//NO. Room khud-se “background mei chalta” nahi hai.//Background work tab hota hai jab tum query call karte ho
         return Room.databaseBuilder(context = context, klass = AppDataBase::class.java, name = "complainAppUserData")
-            .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING).
-        build()// fallback for migataion for app update
+            .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING).addMigrations(MIGRATION_1_2)
+            .build()// fallback for migataion for app update
     }
     @Provides
     @Singleton
@@ -112,18 +118,35 @@ object HiltDependencies {
     @Singleton
     fun returnUserProfileDataRepo(dao:ProfileRoom.ProfileQueries,fireRepo:FireBaseProfileDataFetchRemoteSource,
                                   mutex: Mutex,dao2: ComplaintDataRoom.ComplaintDao, repo:UserComplaintsReadRepository,
-                                  @MainDispatcher  mainDispatcher: CoroutineDispatcher,@IoDispatcher ioDispatcher:CoroutineDispatcher)=
-        ProfileRepository(dao, fireRepo, mutex, dao2, repo, mainDispatcher = mainDispatcher, ioDispatcher = ioDispatcher)
+                                  @MainDispatcher  mainDispatcher: CoroutineDispatcher,@IoDispatcher ioDispatcher:CoroutineDispatcher,dataStoreManager: DataStoreManager)=
+        ProfileRepository(dao, fireRepo, mutex, dao2, repo, mainDispatcher = mainDispatcher, ioDispatcher = ioDispatcher,dataStoreManager)
 
 
     @Provides
     @Singleton
-    fun returnReportsRepofirebase(fire:FirebaseFirestore)=ReportsRepoFirebase(fire)
+    fun returnReportsRepofirebase(fire:FirebaseFirestore,dataStoreManager: DataStoreManager)=ReportsRepoFirebase(fire,dataStoreManager)
+
+    @Qualifier
+    @Retention(AnnotationRetention.BINARY)
+    annotation class ApplicationScope
+
+    @Provides
+    @Singleton
+    @ApplicationScope
+    fun provideApplicationScope(): CoroutineScope {
+        return CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    }
+    @Provides
+    @Singleton
+    fun returnComplaintDao(dao: ComplaintDataRoom.ComplaintDao,auth: FirebaseAuth,fire:ReportsRepoFirebase,mutex: Mutex,dataStoreManager: DataStoreManager)=
+        UserComplaintsReadRepository(dao,auth,fire,mutex,dataStoreManager)
 
 
     @Provides
     @Singleton
-    fun returnComplaintDao(dao: ComplaintDataRoom.ComplaintDao,auth: FirebaseAuth,fire:ReportsRepoFirebase,mutex: Mutex)=
-        UserComplaintsReadRepository(dao,auth,fire,mutex)
+    fun returnListenerRepositoryInstance( firebase: FirebaseFirestore,dao: ComplaintDataRoom.ComplaintDao)=ListenerRepository(firebase, dao)
 
+    @Provides
+    @Singleton
+    fun returnSessionManagerForListener(listenerRepo:ListenerRepository)=SessionManager(listenerRepo)
 }

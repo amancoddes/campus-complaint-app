@@ -7,7 +7,7 @@ data class FirstAppFireStoreDataClass(
     val description: String = "",
     val timestamp: Long = System.currentTimeMillis(),
     val address: String = "",
-    val status: String = "ACTIVE",
+    val status: String = "PENDING",
     val userId: String = "",
    // val imageUrl: String = ""// firestorage mie string ke form mei store hoti hai
     val latitude: Double? = null,
@@ -16,7 +16,8 @@ data class FirstAppFireStoreDataClass(
     val accuracy: Float =0f,
     val confidence: Confidence=Confidence.MEDIUM,
     val mode:Mode = Mode.OUTDOOR,
-    val numberOfPeoples:Int=0
+    val numberOfPeoples:Int=0,
+    val updatedTime:Long=0L
 // indoor ya outdoor
 // jitne bhi parameters hai unko default value deni hogi kyu jab firebase apne value store karge to usko emtpyt chiye
 )

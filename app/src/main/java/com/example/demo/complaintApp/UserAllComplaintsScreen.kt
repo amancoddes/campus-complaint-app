@@ -1,291 +1,144 @@
 package com.example.demo.complaintApp
 
 import android.util.Log
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import coil.compose.rememberAsyncImagePainter
+import androidx.paging.PagingData
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import kotlinx.coroutines.flow.flowOf
+
 
 @Composable
-fun UserAllComplaintsScreen(viewmodel: UserAllComplaintsScreenViewModel,navHostController: NavHostController){
-
-    val statesState by viewmodel.uiState.collectAsStateWithLifecycle(
-        minActiveState = Lifecycle.State.RESUMED
-    )
-
-    when(statesState){
-        is CombineState.Loading -> {
-            Log.e("success34", "ui loading ")
-            ScaffoldMethod(content = { padding->
-                LoadingShimmer(padding)
-                           },navHostController)
-        }
-        is CombineState.Error -> {
-            Log.e("success34", "error ui  ")
-
-            ScaffoldMethod(content = { padding ->
-                ErrorMethod(error = (statesState as CombineState.Error).message,padding,navHostController, onClick = { viewmodel.fetchUserDataAfterLoginAndSignUp()})
-            },navHostController
-            )
-
-        }
-        is CombineState.Success -> {
-            Log.e("success34", "success ui ")
-
-            val lists= (statesState as CombineState.Success).data
-            ScaffoldMethod(content = {padding ->
-                SuccessState(list =lists, navHostController = navHostController, padding = padding)
-            },navHostController)
-        }
-        is CombineState.Empty -> {
-            Log.e("success34", " empty ")
-
-            ScaffoldMethod(content = { padding ->
-                AddMethod(error =  "you not report any complaint",padding)
-            },navHostController
-            )
-        }
-
-        CombineState.Login ->{
-            ScaffoldMethod(content = { padding ->
-                LoginMethod(error = "user not login ",padding)
-            },navHostController
-            )
+fun UserAllComplaintsScreen(navHostController: NavHostController, viewModel: UserAllComplaintsScreenViewModel, innerPadding: PaddingValues) {
+    val items = viewModel.pagingFlow.collectAsLazyPagingItems()
+    val viewCounts by viewModel.counts.collectAsState()
+    val selectedTab by viewModel.selectedTab.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(Unit) {
+        viewModel.syncOnce()
+        Log.e("syncOne","syncOne 🌞🌞")
+    }
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect { message ->
+            snackbarHostState.showSnackbar(message)
         }
     }
-
-//    LazyColumn(Modifier.padding(padding)) {
-//        items(list) { list ->
-//
-//            ComplaintCard(item, onClick = {
-//                navHostController.navigate("complaint_detail/${item.id}")
-//            })
-//        }
-//    }
-//}
-
-
-
-
+    val uiState by viewModel.uiState.collectAsState()
+    HomeScreen(uiState = uiState,snackbarHostState = snackbarHostState, onRetry = { viewModel.retrySync() }, loginRetry = {
+        navHostController.navigate("login/signup") {
+            popUpTo("login/signup") {
+                inclusive = true
+            }
+        }
+    },selectedTab = selectedTab, innerPadding = innerPadding,
+        onTabChange = viewModel::onTabChange,counts=viewCounts,items, clickItem = { item ->
+            navHostController.navigate("complaint_detail/${item.id}")
+        })
 }
 @Composable
-fun ComplaintCard(
-    item: ComplaintDataRoom.ComplaintEntity,
-    onClick: () -> Unit,
-    message:String,
-    padding: PaddingValues
+fun HomeScreen(uiState: HomeUiState, snackbarHostState: SnackbarHostState, onRetry:() -> Unit, loginRetry:()->Unit
+               , selectedTab: HomeTab, innerPadding: PaddingValues,
+               onTabChange: (HomeTab) -> Unit, counts: HomeCounts, items: LazyPagingItems<ComplaintDataRoom.ComplaintEntity>,clickItem:(ComplaintDataRoom.ComplaintEntity)->Unit
 ) {
-    Column(
+    Box(
         modifier = Modifier
-            .padding(padding).padding(10.dp)
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp))
-            //.clickable { onClick() }
+            .fillMaxSize()
+            .padding(innerPadding)
     ) {
 
-        Image(
-            painter = rememberAsyncImagePainter(model = R.drawable.imagedefault),
-            contentDescription = null,
-            modifier = Modifier
-                .padding(horizontal =6.dp, vertical = 9.dp)
-                .fillMaxWidth()
-                .height(300.dp),
-            contentScale = ContentScale.Crop
-        )
+        Column( modifier = Modifier.fillMaxSize()
+        ) {
 
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Spacer(Modifier.height(20.dp))
+            when(uiState) {
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        MaterialTheme.colorScheme.primaryContainer,
-                        RoundedCornerShape(20.dp)
-                    )
-                    .border(
-                        1.dp,
-                        MaterialTheme.colorScheme.outline,
-                        RoundedCornerShape(20.dp)
-                    )
-                    .padding(16.dp),
-            ) {
-                Text(
-                    text = "complaint:",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 19.sp
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = item.complain,
-                    modifier = Modifier.weight(1f),
-                    fontSize = 18.sp
-
-                )
-            }
-
-
-            if(item.description.isNotBlank()){
-                Box(
-                    modifier = Modifier
-                        .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
-                        .padding(8.dp)
-                ) {
-                    Text(
-                        text = item.description,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                is HomeUiState.Empty -> {
+                    EmptySection()
                 }
-            }
-            Spacer(Modifier.height(8.dp))
+                is HomeUiState.Error -> {
+                    ErrorSection( message = uiState.message, onRetry = onRetry)
+                }
+                is HomeUiState.Loading -> {
+                    LoadingSection()
+                }
+                is HomeUiState.NotLogin -> {
+                    LoginRequiredSection(onLoginClick = loginRetry)
+                }
+                is HomeUiState.Success -> {
 
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        MaterialTheme.colorScheme.primaryContainer,
-                        RoundedCornerShape(20.dp)
+                    HomeTopTabs(
+                        selectedTab = selectedTab,
+                        pendingCount = counts.pending,
+                        resolvedCount = counts.resolved,
+                        onTabChange = onTabChange
                     )
-                    .border(
-                        1.dp,
-                        MaterialTheme.colorScheme.outline,
-                        RoundedCornerShape(20.dp)
-                    )
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = "address:",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = item.address,
-                    modifier = Modifier.weight(1f),
-                    fontSize = 17.sp
-                )
-            }
 
-            Spacer(Modifier.height(8.dp))
-
-            Row {
-
-                Column(Modifier.padding(10.dp)) {
-                    Text("Time")
-                    Text(formatTimestamp(item.timestamp.toLong()))
-
-                    if(item.status=="solve"){
-                        Text(item.status)
+                    when (selectedTab) {
+                        HomeTab.RECENT ->  ShowList(items, clickItem = clickItem)
+                        HomeTab.PENDING -> ShowList(items,clickItem = clickItem)
+                        HomeTab.RESOLVED -> ShowList(items,clickItem = clickItem)
                     }
+
                 }
-
-
-                Spacer(Modifier.width(10.dp))
-
-                Button(onClick=onClick) {
-                    Text(message)
-                }
-
             }
 
 
 
+
+
         }
-
-    }
-
-
-}
-
-
-@Composable
-fun ScaffoldMethod(content : @Composable (PaddingValues) -> Unit,navHostController: NavHostController,textSource:String=""){
-    Scaffold(topBar = {
-        CommonTopAppBar(
-            title = "complaints list",
-            onBackClick = { navHostController.popBackStack() }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
         )
-    }) { padding:PaddingValues->
-        content(padding)
-
     }
-}
 
-@Composable
-fun ErrorMethod(error:String,padding:PaddingValues,navHostController: NavHostController,onClick: () -> Unit){
-    Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center){
 
-        Text(error)
-        Spacer(modifier = Modifier.height(40.dp))
-        Button(onClick = onClick){
-            Text("try again")
-        }
 
-    }
+    //  }
 }
 
 
+
+
+
+val fakeList = listOf(
+    ComplaintDataRoom.ComplaintEntity("1", "Complaint 1", "PENDING", 0L),
+    ComplaintDataRoom.ComplaintEntity("2", "Complaint 2", "RESOLVED", 0L)
+)
+
+
+@Preview(showBackground = true)
 @Composable
-fun LoginMethod(error:String,padding:PaddingValues){
-    Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center){
+fun HomeScreenPreview() {
 
-        Text(error)
-        Spacer(modifier = Modifier.height(40.dp))
-
+    val items = flowOf(PagingData.from(fakeList))
+        .collectAsLazyPagingItems()
+    val fakeSnackbarHostState = SnackbarHostState()
+    CityCareTheme {
+        HomeScreen( uiState = HomeUiState.Success, snackbarHostState = fakeSnackbarHostState, onRetry = {  }, loginRetry = {}
+            , selectedTab = HomeTab.RECENT, onTabChange = {}, innerPadding = PaddingValues(10.dp), counts = HomeCounts() ,
+            items = items,
+            clickItem = {}
+        )
     }
-}
 
 
-@Composable
-fun AddMethod(error:String,padding:PaddingValues){
-    Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center){
-
-        Text(error)
-        Spacer(modifier = Modifier.height(40.dp))
-
-    }
-}
-
-@Composable
-fun SuccessState(list: List<ComplaintDataRoom.ComplaintEntity>, padding: PaddingValues,navHostController: NavHostController){
-    LazyColumn(modifier = Modifier.padding(padding)) {// lazy items
-        items(list) { item ->
-            ComplaintCard(item, onClick = {
-                navHostController.navigate("complaint_detail/${item.id}")
-            }, message = "detail screen", padding = padding)
-        }
-    }
 }

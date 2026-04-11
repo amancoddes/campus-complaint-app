@@ -1,3 +1,4 @@
+
 package com.example.demo.complaintApp
 
 import android.util.Log
@@ -15,7 +16,7 @@ import javax.inject.Inject
 
 
 @HiltViewModel
-class ProfileScreenViewModel @Inject constructor(private val profileRepo: ProfileRepository):ViewModel(){
+class ProfileScreenViewModel @Inject constructor(private val profileRepo: ProfileRepository,private val sessionManager: SessionManager):ViewModel(){
 
 
 
@@ -70,6 +71,9 @@ class ProfileScreenViewModel @Inject constructor(private val profileRepo: Profil
 
 
 
+    fun cancelListener(){
+        sessionManager.onLogout()
+    }
 
 
 

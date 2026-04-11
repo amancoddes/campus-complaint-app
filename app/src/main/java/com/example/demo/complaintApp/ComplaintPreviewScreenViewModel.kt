@@ -147,6 +147,7 @@ class ComplaintPreviewScreenViewModel @Inject constructor(private val repository
             }
 
         val decision = storeComplainLists.fold(
+
             onSuccess = { complaints ->
               decideComplaintAction(
                     candidates = complaints,
@@ -158,7 +159,7 @@ class ComplaintPreviewScreenViewModel @Inject constructor(private val repository
             onFailure = {
                 _uiState.value=ComplaintUiState.Idle
                 _snackbarEvent.emit(it.message?:"some thing wrong try again")
-                println(" filaure 🥸")
+                println(" failure 🥸")
                 return@launch
 
             }
@@ -200,8 +201,6 @@ class ComplaintPreviewScreenViewModel @Inject constructor(private val repository
                         return@launch
                     }
 
-
-
                     val result = withContext(ioDispatcher) {
                         println("send complain 🎃")
                         repository.sendComplain(dataComplain)
@@ -210,9 +209,8 @@ class ComplaintPreviewScreenViewModel @Inject constructor(private val repository
 
                     result.fold(
                         onSuccess = { id ->
-
                             _uiState.value = ComplaintUiState.Success(id)
-                            userRepoComplint.fetchNewComplaint(id)
+                         //   userRepoComplint.fetchNewComplaint(id)
                             return@launch
                         },
                         onFailure = { e ->
@@ -227,8 +225,6 @@ class ComplaintPreviewScreenViewModel @Inject constructor(private val repository
 
 
             }
-
-
             _uiState.value = ComplaintUiState.Idle
 
             return@launch// change here
@@ -236,14 +232,6 @@ class ComplaintPreviewScreenViewModel @Inject constructor(private val repository
 
 
 }
-
-
-
-
-
-
-
-
 
 //    private val fetcher = LocationFetcher(context)
 //    private val validator = LocationValidator()
@@ -396,8 +384,6 @@ val check = checkBuilding(location = loc, building = _building.value, buildNotMa
             val tilesBackendInsideComplaint = withContext(ioDispatcher) {
                     userRepoComplint.fetchInsideTileKeys(hash = hashInside)
             }
-
-
         val decisionInside=tilesBackendInsideComplaint.fold(
             onSuccess = { oldComplaint->
                 validateInsideOldComplaints(old = oldComplaint)
@@ -408,7 +394,6 @@ val check = checkBuilding(location = loc, building = _building.value, buildNotMa
                 return@launch
             }
         )
-
             when(decisionInside){
                 DecisionInside.Accept->{
 
@@ -427,8 +412,6 @@ val check = checkBuilding(location = loc, building = _building.value, buildNotMa
                     val resultInside = withContext(ioDispatcher) {
                         repository.sendComplain(dataComplainInside)
                     }
-
-
                     resultInside.fold(
                         onSuccess = { id ->
 
@@ -446,21 +429,15 @@ val check = checkBuilding(location = loc, building = _building.value, buildNotMa
                     )
 
                 }
-
                 DecisionInside.Reject -> {
                     _uiState.value = ComplaintUiState.PriorityIncrease
                     _snackbarEvent.emit(  " complaint already exist we increase one priority ")
                     return@launch
                 }
             }
-
-
-
     }
 
 }
-
-
 sealed class ComplaintUiState {
 
     data object Idle : ComplaintUiState()
@@ -473,6 +450,3 @@ sealed class ComplaintUiState {
 
     data object PriorityIncrease : ComplaintUiState()
 }
-
-
-

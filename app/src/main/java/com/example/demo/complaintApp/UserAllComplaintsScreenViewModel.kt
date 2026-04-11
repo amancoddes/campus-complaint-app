@@ -3,134 +3,130 @@ package com.example.demo.complaintApp
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import com.example.demo.complaintApp.ComplaintDataRoom.ComplaintEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
 @HiltViewModel
-class UserAllComplaintsScreenViewModel @Inject constructor( private val userRepoComplint:UserComplaintsReadRepository):ViewModel(){// esme val hatane ko kah raha hai
+class UserAllComplaintsScreenViewModel @Inject constructor( private val repository:UserComplaintsReadRepository):ViewModel(){// esme val hatane ko kah raha hai
 
 
-
-    private val _userDataScreenState= MutableStateFlow<ComplaintSyncState>(ComplaintSyncState.Idle)
-
-    init {
-        fetchUserDataAfterLoginAndSignUp()
-    }
-
-
-    fun fetchUserDataAfterLoginAndSignUp(){
-        _userDataScreenState.value=ComplaintSyncState.Loading
-        viewModelScope.launch {
-            when(val result=userRepoComplint.checkUidCompalints()){
-                is ComplaintResultInList.Error -> {
-                    val message:String = result.message
-                    _userDataScreenState.value=ComplaintSyncState.Error(message)
-
-                }
-                is ComplaintResultInList.NotFound -> {
-                    _userDataScreenState.value=ComplaintSyncState.NotFound("add complaint")
-                }
-                is ComplaintResultInList.Success -> {
-                    _userDataScreenState.value=ComplaintSyncState.Success
-                    Log.e("success34","run ")
-                }
-                ComplaintResultInList.Login -> {
-                    _userDataScreenState.value=ComplaintSyncState.Login
-                }
-                ComplaintResultInList.NotFetch -> ComplaintSyncState.NotFetch
-            }
-        }
-
-    }
+    val counts = combine(
+        repository.pendingCountFlow,
+        repository.resolvedCountFlow
+    ) { pending, resolved ->
+        HomeCounts(pending, resolved)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeCounts())
 
 
-
-    val complaints =
-        userRepoComplint.observeUserComplaints()
-            .stateIn(
-                viewModelScope,
-                SharingStarted.WhileSubscribed(0),
-                ComplaintUiStates.Loading
-            )
-
-
-
-
-    val uiState: StateFlow<CombineState> = combine(_userDataScreenState,complaints) { fetching ,room ->
-
-        when{
-            fetching is ComplaintSyncState.Loading ->{
-                CombineState.Loading
-            }
-            fetching is ComplaintSyncState.Error  ->{
-                CombineState.Error(message = fetching.message )
-            }
-            fetching is ComplaintSyncState.Login -> {
-                CombineState.Login
-            }
-            room is ComplaintUiStates.Empty ->{
-                CombineState.Empty(message = "empty complaints list")
-            }
-            room is ComplaintUiStates.Success -> {
-                Log.e("success34", "success ")
-                CombineState.Success(data = room.data)
-            }
-            room is ComplaintUiStates.NotLogin -> {
-                CombineState.Login
-            }
-
-            else -> {
-                CombineState.Loading
-            }
-        }
-
-    }.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-        CombineState.Loading
+    private val _uiState = MutableStateFlow<HomeUiState>(
+        HomeUiState.Loading
     )
+    val uiState = _uiState.asStateFlow()
+
+    private val _uiEvent = MutableSharedFlow<String>()
+    val uiEvent = _uiEvent.asSharedFlow()
+
+    fun retrySync() {
+        _uiState.value = HomeUiState.Loading
+        syncOnce()
+    }
+    private var isSynced = false
 
 
 
+    fun syncOnce() {
+        if (isSynced) return
+
+        isSynced = true
+        viewModelScope.launch {
+            // delay(2000)
+            _uiState.value = HomeUiState.Loading
+
+            try {
+                when (val result = repository.checkUidCompalints()) {
+
+                    is ComplaintResultInList.Success -> {
+                        _uiState.value = HomeUiState.Success
+
+                    }
+
+                    is ComplaintResultInList.Error -> {
+                        _uiState.value = HomeUiState.Error(
+                            message = result.message
+                        )
+
+                    }
+
+                    ComplaintResultInList.NotFound -> {
+                        _uiState.value = HomeUiState.Empty
+
+                    }
+
+                    ComplaintResultInList.Login -> {
+                        _uiState.value = HomeUiState.NotLogin
+
+                    }
+
+                }
+
+            } catch (e: Exception) {
+                _uiEvent.emit("Something went wrong")
+            }
+        }
+
+    }
+
+    private val _selectedTab = MutableStateFlow(HomeTab.RECENT)
+    val selectedTab = _selectedTab.asStateFlow()
+
+    fun onTabChange(tab: HomeTab) {
+        _selectedTab.value = tab
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val pagingFlow: Flow<PagingData<ComplaintEntity>> =
+        selectedTab.flatMapLatest { tab ->
+            repository.getPagedComplaintsRepo(tab)
+        }.cachedIn(viewModelScope)
 
 }
 
-sealed class ComplaintSyncState {
-    data object Idle : ComplaintSyncState()
-    data object Loading:ComplaintSyncState()
-    data class NotFound(val message: String) : ComplaintSyncState()
-    data object Success: ComplaintSyncState()
-    data class Error(val message: String) : ComplaintSyncState()
-    data object Login:ComplaintSyncState()
-    data object NotFetch:ComplaintSyncState()
-}
 
 
+sealed class HomeUiState {
 
+    data object Loading : HomeUiState()
 
-sealed class CombineState {
-    data object Loading:CombineState()
-    data class Empty(val message: String) : CombineState()
-    data class Success(val data: List<ComplaintDataRoom.ComplaintEntity>) : CombineState()
-    data class Error(val message: String) : CombineState()
-    data object Login:CombineState()
+    data object Success : HomeUiState()
+
+    data class Error(val message: String): HomeUiState()
+
+    data object Empty : HomeUiState()
+
+    data object NotLogin : HomeUiState()
 }
 
 
 
 
 
-
-
-
-
-
-
-
+data class HomeCounts(
+    val pending: Int = 0,
+    val resolved: Int = 0
+)

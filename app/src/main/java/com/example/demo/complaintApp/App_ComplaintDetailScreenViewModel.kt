@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.time.delay
 import javax.inject.Inject
 
 @HiltViewModel
@@ -23,9 +24,11 @@ class ComplaintDetailViewModel @Inject constructor(
 
     fun load(id: String) {
         viewModelScope.launch {
+
             _loading.value = true
+            kotlinx.coroutines.delay(1000)
             // Fetch from Firestore (latest)
-            repo.fetchNewComplaint(id)
+            repo.observeUserOneComplaints(id)
 
             //  Now read the updated value from Room
             _complaint.value = repo.observeUserOneComplaints(id)

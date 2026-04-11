@@ -2,6 +2,7 @@ package com.example.soul
 
 import app.cash.turbine.test
 import com.example.demo.complaintApp.ComplaintDataRoom
+import com.example.demo.complaintApp.DataStoreManager
 import com.example.demo.complaintApp.ProfileDataFetchRemoteSource
 import com.example.demo.complaintApp.ProfileFetchRoom
 import com.example.demo.complaintApp.ProfileRepository
@@ -10,18 +11,13 @@ import com.example.demo.complaintApp.UserComplaintsReadRepository
 import com.example.demo.complaintApp.UserData
 import com.example.demo.complaintApp.UserProfileData
 import com.example.demo.complaintApp.UserProfileDataStateRepository
-import com.example.demo.complaintApp.toEntity
-
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
-import io.mockk.confirmVerified
 import io.mockk.every
-
 import io.mockk.just
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flow
@@ -48,6 +44,7 @@ private val fakeData=UserData(name = "animora", branch ="CSIT", rollNo = "cs89",
     private lateinit var daoProfile:ProfileRoom.ProfileQueries
     private lateinit var daoComplaint:ComplaintDataRoom.ComplaintDao
     private lateinit var backendComplaint:UserComplaintsReadRepository
+    private lateinit var dataStoreManager: DataStoreManager
 
     @Before
     fun setMocks(){
@@ -55,6 +52,7 @@ private val fakeData=UserData(name = "animora", branch ="CSIT", rollNo = "cs89",
         backendComplaint= mockk()
         daoProfile= mockk()
         daoComplaint= mockk()
+        dataStoreManager= mockk()
     }
 
     private fun instance(testScheduler: TestCoroutineScheduler):ProfileRepository{
@@ -66,7 +64,8 @@ private val fakeData=UserData(name = "animora", branch ="CSIT", rollNo = "cs89",
             dao2 = daoComplaint,
             repo = backendComplaint,
             dispatcher,
-            dispatcher
+            dispatcher,
+            dataStoreManager = dataStoreManager
         )
     }
 

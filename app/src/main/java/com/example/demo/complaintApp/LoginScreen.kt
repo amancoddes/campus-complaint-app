@@ -4,15 +4,26 @@ import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -21,117 +32,161 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-
-
 @Composable
 fun LoginScreen(
     nav: NavHostController,
     viewModel: LoginScreenViewModel
 ) {
 
-
-
-
-    val colors = MaterialTheme.colorScheme   // 👈 YEH MISSING THA
-
-    val gradientColors = if (isSystemInDarkTheme()) {
-        listOf(
-            colors.primary.copy(alpha = 0.15f),
-            colors.background
-        )
-    } else {
-        listOf(
-            colors.primary.copy(alpha = 0.08f),
-            colors.background
-        )
-    }
-
-
-
     val state by viewModel.uiState.collectAsState()
-    Log.e("splashView", " see the login state $state")
-    // listen ONLY for events
+
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
-            when (event) {// navigation ke liye sharedflow sahi hai
-                LoginEvent.GoHome -> {
-                    nav.navigate("main_Graph") {
-                        popUpTo(AuthScreens.Login_Screen.route) {
-                            inclusive = true
-                        }
-                        launchSingleTop = true
-                    }
+            if (event is LoginEvent.GoHome) {
+                nav.navigate("main_Graph") {
+                    popUpTo(AuthScreens.Login_Screen.route) { inclusive = true }
                 }
             }
         }
     }
 
-    Column(
+    LoginContent(
+        email = viewModel.email,
+        password = viewModel.password,
+        onEmailChange = viewModel::onEmailChange,
+        onPasswordChange = viewModel::onPasswordChange,
+        onLoginClick = { viewModel.login() },
+        onSignupClick = {
+            nav.navigate(AuthScreens.SignUp_Screen.route)
+        },
+        isLoading = state is LoginState.Loading,
+        error = (state as? LoginState.Error)?.msg
+    )
+}
 
+@Composable
+fun LoginContent(
+    email: String,
+    password: String,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onLoginClick: () -> Unit,
+    onSignupClick: () -> Unit,
+    isLoading: Boolean = false,
+    error: String? = null
+) {
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            //.padding(20.dp)
             .background(
-                Brush.verticalGradient(gradientColors)
-            ),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFF5C6BC0),
+                        Color(0xFF3949AB),
+                        Color(0xFF1A237E)
+                    )
+                )
+            )
     ) {
 
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+                .align(Alignment.Center),
+            shape = RoundedCornerShape(24.dp),
+            elevation = CardDefaults.cardElevation(10.dp)
+        ) {
 
-        when (state) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
 
-            LoginState.Loading -> CircularProgressIndicator()
+                Text("Welcome Back 👋", fontSize = 22.sp, fontWeight = FontWeight.Bold)
 
-            is LoginState.Error -> {
-                Text((state as LoginState.Error).msg, color = Color.Red)
-                Spacer(Modifier.height(16.dp))
-                LoginForm(viewModel, nav)
+                Spacer(Modifier.height(8.dp))
+
+                Text("Login to continue", color = Color.Gray)
+
+                Spacer(Modifier.height(20.dp))
+
+                if (isLoading) {
+                    CircularProgressIndicator()
+                } else {
+
+                    if (error != null) {
+                        Text(error, color = Color.Red)
+                        Spacer(Modifier.height(10.dp))
+                    }
+
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = onEmailChange,
+                        label = { Text("Email") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Email, contentDescription = null)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = onPasswordChange,
+                        label = { Text("Password") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Lock, contentDescription = null)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(Modifier.height(20.dp))
+
+                    Button(
+                        onClick = onLoginClick,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Login")
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+
+                    TextButton(
+                        onClick = onSignupClick,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("New here? Create Account")
+                    }
+                }
             }
-
-            LoginState.Idle -> {
-                Log.e("splashView2","login screen Idle")
-                LoginForm(viewModel, nav)}
         }
     }
 }
 
 
+
+@Preview(showBackground = true)
 @Composable
-fun LoginForm(viewModel: LoginScreenViewModel,nav: NavHostController) {
+fun LoginPreview() {
 
-    OutlinedTextField(
-        value = viewModel.email,
-        onValueChange = viewModel::onEmailChange,
-        label = { Text("Email") }
-    )
+    CityCareTheme {
+        LoginContent(
+            email = "test@gmail.com",
+            password = "wrong",
+            onEmailChange = {},
+            onPasswordChange = {},
+            onLoginClick = {},
+            onSignupClick = {},
+            error = "Invalid credentials"
+        )
 
-    Spacer(Modifier.height(12.dp))
-
-    OutlinedTextField(
-        value = viewModel.password,
-        onValueChange = viewModel::onPasswordChange,
-        label = { Text("Password") }
-    )
-
-    Spacer(Modifier.height(12.dp))
-
-    Button(onClick = { viewModel.login() }) {
-        Text("Login")
-    }
-
-
-
-    Button(
-        onClick = {
-            nav.navigate(AuthScreens.SignUp_Screen.route) {
-                Log.e("splashView","go to signup  ")
-                popUpTo(AuthScreens.Login_Screen.route) { inclusive = true }
-            }
-        }
-    ) {
-        Text("Go to Signup")
     }
 }

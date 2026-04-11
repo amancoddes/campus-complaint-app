@@ -1,9 +1,11 @@
 package com.example.demo.complaintApp
 
+import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +15,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 @HiltViewModel
 class SignUpScreenViewModel @Inject constructor(
-    private val repo: UserAuthRepository
+    private val repo: UserAuthRepository,
+    private val sessionManager: SessionManager,
+    private val auth:FirebaseAuth
 ) : ViewModel() {
 
     private val _email = mutableStateOf("")
@@ -29,12 +33,19 @@ class SignUpScreenViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<DataClassLogin>(DataClassLogin.Idle)
     val uiState = _uiState.asStateFlow()
 
-    // 🔥 SnackBar EVENTS
+    // SnackBar EVENTS
     private val _snackbar = MutableSharedFlow<String>()
     val snackbar = _snackbar.asSharedFlow()
 
     private suspend fun showSnack(msg: String) {
         _snackbar.emit(msg)
+    }
+
+
+    fun onVerificationSuccess() {
+        val uid = auth.currentUser?.uid ?: return
+        Log.e("listener","listener start from the email verification 🌞")
+        sessionManager.onLogin(uid)
     }
 
     fun signUp() {
@@ -55,10 +66,10 @@ class SignUpScreenViewModel @Inject constructor(
         }
     }
 
-    fun checkEmailVerified() {
-        viewModelScope.launch {
-            _uiState.value = DataClassLogin.Loading
 
+    fun checkEmailVerified() {
+        _uiState.value = DataClassLogin.Loading
+        viewModelScope.launch {
             val verified = repo.isEmailVerified()
 
             if (verified) {

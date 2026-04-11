@@ -3,7 +3,6 @@ package com.example.demo.complaintApp
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.demo.complaintApp.AuthScreens
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +15,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SplashScreenViewModel @Inject constructor(
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    val repository: ListenerRepository
 ) : ViewModel() {
 
     private val _startDestination = MutableStateFlow<String?>(null)
@@ -27,25 +27,30 @@ class SplashScreenViewModel @Inject constructor(
     }
 
     private fun checkUser() {
-
-
-
         viewModelScope.launch {
             try {
                 withTimeout(2000){
                     auth.currentUser?.reload()?.await()
                 }
             } catch(_: Exception) {
-
+                print(" exception on splash view")
             }
 
             val user = auth.currentUser
-            _startDestination.value = when {
-                user == null -> AuthScreens.Login_Screen.route  // not logged in
+            when {
+                user == null -> {
+                    _startDestination.value = AuthScreens.Login_Screen.route
+                }  // not logged in
 
-                user.isEmailVerified -> "main_Graph"  // logged-in + verified
+                user.isEmailVerified ->{
+                    repository.startListening(user.uid)
+                    Log.e("listener"," listener start ")
+                    _startDestination.value = "main_Graph"
+                }
 
-                else -> AuthScreens.Auth_Verify.route  // logged-in but not verified
+                else -> {
+                    _startDestination.value=AuthScreens.Auth_Verify.route
+                }  // logged-in but not verified
             }
         }
 

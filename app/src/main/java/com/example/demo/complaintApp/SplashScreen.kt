@@ -1,24 +1,35 @@
 package com.example.demo.complaintApp
 
 import android.util.Log
+import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.demo.complaintApp.AllGraphScreeens1
@@ -27,31 +38,93 @@ import kotlinx.coroutines.delay
 @Composable
 fun SplashScreen(nav: NavHostController, viewModel: SplashScreenViewModel) {
 
-
-
-
-    Box(modifier = Modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.primary), contentAlignment = Alignment.Center){
-        Image(painter = painterResource(id = R.drawable.finallogoformhome), contentDescription = null, contentScale = ContentScale.Fit, modifier = Modifier
-            .fillMaxSize(0.5f) // same width & height (important!)
-            .aspectRatio(1f) //  ensures it's a 1:1 square before clipping
-            .clip(CircleShape) //  now it will be perfectly circular
-            .border(3.dp, Color.White, CircleShape)
-            .scale(1.3f) )
-    }
-    Log.e("splashView","see the before collect state")
-    val dest = viewModel.startDestination.collectAsState()
-    Log.e("splashView","after the collectstate ${dest.value}")
-    LaunchedEffect(dest.value) {
-        Log.e("splashView","Launched effect")
+    val dest by viewModel.startDestination.collectAsState()
+    LaunchedEffect(dest) {
         delay(3000)
-        if (dest.value != null) {
-            nav.navigate(dest.value!!) {
+        if (dest != null) {
+            nav.navigate(dest!!) {
                 popUpTo(AllGraphScreeens1.Splash.route) { inclusive = true }
             }
 
         }
     }
+    SplashContent()
 
-    // splash UI
+}
 
+@Composable
+fun SplashContent() {
+
+    val infiniteTransition = rememberInfiniteTransition(label = "")
+
+    // scale animation
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 0.8f,
+        targetValue = 1.1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = EaseInOut),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = ""
+    )
+
+    //  alpha animation
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = ""
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    listOf(
+                        Color(0xFF1A237E), // deep blue
+                        Color(0xFF3949AB), // mid blue
+                        Color(0xFF5C6BC0)  // light blue
+                    )
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+
+        //  glowing circle effect
+        Box(
+            modifier = Modifier
+                .size(220.dp)
+                .scale(scale)
+                .background(
+                    color = Color.White.copy(alpha = 0.1f),
+                    shape = CircleShape
+                )
+        )
+
+        //  logo
+        Image(
+            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .size(150.dp)
+                .clip(CircleShape)
+                .border(3.dp, Color.White, CircleShape)
+                .alpha(alpha)
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SplashPreview() {
+
+    CityCareTheme {
+        SplashContent()
+
+    }
 }

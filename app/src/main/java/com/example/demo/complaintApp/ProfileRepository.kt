@@ -26,8 +26,8 @@ class ProfileRepository @Inject constructor (
     private val dao2: ComplaintDataRoom.ComplaintDao,
     private val repo: UserComplaintsReadRepository,
     @HiltDependencies.MainDispatcher val mainDispatcher:CoroutineDispatcher,
-    @HiltDependencies.IoDispatcher val ioDispatcher: CoroutineDispatcher
-
+    @HiltDependencies.IoDispatcher val ioDispatcher: CoroutineDispatcher,
+    private val dataStoreManager: DataStoreManager
 ){
 
 
@@ -92,7 +92,8 @@ but system extra kaam karega jo bilkul unnecessary hai.
 
    suspend fun logout(){
        val uid = currentUid() ?: return
-        dao2.deleteUserComplaints(uid =uid )
+       dataStoreManager.clearLastSyncTime()
+       dao2.deleteUserComplaints(uid =uid )
        dao.deleteUserProfileData(uid=uid)
     }
 

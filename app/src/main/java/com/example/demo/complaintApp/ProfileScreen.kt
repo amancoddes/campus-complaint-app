@@ -1,22 +1,25 @@
 package com.example.demo.complaintApp
 
-import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,7 +33,7 @@ import com.google.firebase.auth.FirebaseAuth
 
 
 @Composable
-fun ProfileScreen(viewModel: ProfileScreenViewModel,navHostController: NavHostController){
+fun ProfileScreen(viewModel: ProfileScreenViewModel,navHostController: NavHostController,paddingValues: PaddingValues){
 // splash ka logic use karo future mei
     val auth = FirebaseAuth.getInstance()
     val profileState by viewModel.uiState.collectAsStateWithLifecycle(
@@ -48,12 +51,8 @@ fun ProfileScreen(viewModel: ProfileScreenViewModel,navHostController: NavHostCo
     }
 
     if (auth.currentUser != null) {
-        Scaffold(topBar = {
-            CommonTopAppBar(
-                title = "Profile",
-                onBackClick = { navHostController.popBackStack() }
-            )
-        }) {paddingValues ->
+     Box(modifier = Modifier.fillMaxSize())
+         {
 
             when(profileState){
                 is CombineProfileFetchState.Loading ->{
@@ -63,14 +62,21 @@ fun ProfileScreen(viewModel: ProfileScreenViewModel,navHostController: NavHostCo
                     LoginMethod(error = "first login ", padding = paddingValues)
                 }
                 is CombineProfileFetchState.Error -> {
-                    ErrorMethod(error = (profileState as CombineProfileFetchState.Error).errorMessage, padding = paddingValues, navHostController = navHostController, onClick = {viewModel.fetchProfileAfterLoginAndSignUp()} )
+                    ErrorMethod(error = (profileState as CombineProfileFetchState.Error).errorMessage, padding = paddingValues, onClick = {viewModel.fetchProfileAfterLoginAndSignUp()} )
                 }
                 is CombineProfileFetchState.Success -> {
                     UserProfileCard((profileState as CombineProfileFetchState.Success).data,navHostController, viewModel = viewModel,paddingValues)
                 }
 
                 is CombineProfileFetchState.Empty -> {
-                    AddMethod(error = "add profile",paddingValues)
+                    AddMethod(error = "add profile",paddingValues, onLogout = {
+                        FirebaseAuth.getInstance().signOut()
+                        viewModel.logoutDeleteRoom()
+
+                        navHostController.navigate("login/signup") {
+                            popUpTo("main_Graph") { inclusive = true }
+                        }
+                    })
                 }
             }
 
@@ -79,36 +85,11 @@ fun ProfileScreen(viewModel: ProfileScreenViewModel,navHostController: NavHostCo
 
 
 
-
-
-//            Column(modifier = Modifier
-//                .fillMaxSize()
-//                .background(color = MaterialTheme.colorScheme.onPrimary).padding(paddingValues)){
-//
-//                val data by viewModel.user.collectAsState()
-//
-//                UserDetailUI(data,navHostController,viewModel,paddingValues)
-//            }
         }
     }
 
 }
 
-//
-//@Composable
-//fun UserDetailUI(user: ProfileRoom.ProfileEntity?,navHostController: NavHostController,viewModel: ProfileScreenViewModel,padding: PaddingValues) {
-//
-//    when {
-//        user == null -> {
-//
-//            LoadingShimmer(padding)
-//        }
-//
-//        else -> {
-//            UserProfileCard(user,navHostController, viewModel = viewModel)
-//        }
-//    }
-//}
 
 @Composable
 fun LoadingShimmer(padding:PaddingValues) {
@@ -139,72 +120,54 @@ fun LoadingShimmer(padding:PaddingValues) {
 
 
 fun Modifier.shimmerEffect(): Modifier = composed {
-    this.background(Color.LightGray.copy(alpha = 0.3f))
+    this.background(Color.Black.copy(alpha = 0.3f))
 }
 
 
 @Composable
-fun UserProfileCard(user: ProfileRoom.ProfileEntity,navHostController: NavHostController,viewModel: ProfileScreenViewModel,padding: PaddingValues) {
+fun ErrorMethod(error:String,padding:PaddingValues,onClick: () -> Unit){
+    Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center){
 
-    Column(
-        modifier = Modifier.padding(padding)
-            .padding(20.dp)
-            .fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center
-    ) {
-
-        Text(
-            text = "Hello, ${user.name}",
-            style = MaterialTheme.typography.headlineSmall
-        )
-
-        Spacer(Modifier.height(10.dp))
-
-        ProfileField(title = "Roll No", value = user.rollNo)
-        ProfileField(title = "Phone", value = user.phone)
-        ProfileField(title = "Branch", value = user.branch)
-
-        Spacer(modifier = Modifier.height(10.dp))
-        Button(
-            onClick = {
-                Log.e("VM", "Logout button clicked")
-                Log.e("NAV2", "Now route = ${navHostController.currentDestination?.route}")
-                FirebaseAuth.getInstance().signOut()
-                Log.e("NAV2", "Now route = ${navHostController.currentDestination?.route}")
-                Log.e("VM", "After signOut -> ${FirebaseAuth.getInstance().currentUser}")
-
-
-                navHostController.navigate("login/signup"){
-                    viewModel.logoutDeleteRoom()
-                    popUpTo("main_Graph") {
-                        //Navigation ke liye ye sahi hai
-                        //But VM destroy ke liye nahi
-
-                        inclusive = true
-                    }
-                    launchSingleTop = true
-                }
-
-
-
-            }
-        ) {
-            Text("Log out")
+        Text(error)
+        Spacer(modifier = Modifier.height(40.dp))
+        Button(onClick = onClick){
+            Text("try again")
         }
-    }
 
+    }
 }
 
+
 @Composable
-fun ProfileField(title: String, value: String) {
-    Column(modifier = Modifier.padding(vertical = 6.dp)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelMedium,
-            color = Color.Gray
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge
-        )
+fun LoginMethod(error:String,padding:PaddingValues){
+    Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center){
+
+        Text(error)
+        Spacer(modifier = Modifier.height(40.dp))
+
+    }
+}
+
+
+@Composable
+fun AddMethod(error:String,padding:PaddingValues,onLogout:()-> Unit){
+    Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center){
+
+        Text(error)
+        Spacer(modifier = Modifier.height(40.dp))
+        Button(
+            onClick = onLogout,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFE53935)
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+        ) {
+            Icon(Icons.AutoMirrored.Filled.ExitToApp, null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Logout")
+        }
+
     }
 }

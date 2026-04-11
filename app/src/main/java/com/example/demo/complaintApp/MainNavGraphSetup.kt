@@ -1,6 +1,7 @@
 package com.example.demo.complaintApp
 
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FeaturedPlayList
 import androidx.compose.material.icons.filled.Home
@@ -35,8 +36,8 @@ sealed class AuthScreens(val route: String){
 
 
 @Composable
-fun NavGraphSetup(navControllerGraph: NavHostController,modifier: Modifier){
-    NavHost(navController = navControllerGraph, startDestination ="login/signup",modifier = modifier ) {
+fun NavGraphSetup(navControllerGraph: NavHostController,innerPadding: PaddingValues){
+    NavHost(navController = navControllerGraph, startDestination ="login/signup") {
 
 
 
@@ -75,9 +76,9 @@ because only composable has a valid NavBackStackEntry.
             }
             }
         navigation(route = "main_Graph", startDestination = AllRoute.Home.route){
-            homeGraph(navControllerGraph = navControllerGraph)
-            profileGraph(navProfile = navControllerGraph)
-            userComplaintsGraph(navHostController = navControllerGraph)
+            homeGraph(navControllerGraph = navControllerGraph, innerPadding = innerPadding)
+            profileGraph(navProfile = navControllerGraph, innerPaddingValues = innerPadding)
+            userComplaintsGraph(navHostController = navControllerGraph, innerPaddingValues = innerPadding)
             addReportGraph(navHostController = navControllerGraph)
 
         }

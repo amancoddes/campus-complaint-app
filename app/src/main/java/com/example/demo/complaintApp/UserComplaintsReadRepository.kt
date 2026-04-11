@@ -1,6 +1,11 @@
 package com.example.demo.complaintApp
-
+import com.google.firebase.firestore.DocumentChange
 import android.util.Log
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import com.example.demo.complaintApp.ComplaintDataRoom.ComplaintEntity
+import com.example.demo.complaintApp.di.HiltDependencies
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -8,25 +13,35 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 class UserComplaintsReadRepository @Inject constructor (private val dao: ComplaintDataRoom.ComplaintDao
-,private val auth: FirebaseAuth,private val firebase: ReportsRepoFirebase,private val mutex: Mutex) {
+                                                        , private val auth: FirebaseAuth, private val firebase: ReportsRepoFirebase, private val mutex: Mutex,
+                                                        private val dataStoreManager: DataStoreManager
+) {
 
 
     suspend fun fetchComplaints(
@@ -41,40 +56,38 @@ class UserComplaintsReadRepository @Inject constructor (private val dao: Complai
     }
 
 
-    private suspend fun currentUid(): String? =
-        uidFlow.firstOrNull()
 
 
-    suspend fun checkUidCompalints(): ComplaintResultInList = withContext(Dispatchers.IO) {// withContext use is there optional because firebase and room can support suspend concept
+// super base
+    // web hook
+
+
+
+    suspend fun checkUidCompalints():ComplaintResultInList= withContext(Dispatchers.IO) {// withContext use is there optional because firebase and room can support suspend concept
         mutex.withLock {
-            Log.e("success34", "run repo ")
             val userUid = currentUid() ?: return@withLock ComplaintResultInList.Login
-            if (dao.countUserComplaints(userUid) > 0) {
-                Log.e("success34", "run after check2 ")
-                return@withLock ComplaintResultInList.Success
-            }
-            Log.e("success34", "run after check ")
+            Log.e("runs14","see 🌞🌞🌞🌞 run the main funciton ")
 
-            return@withLock when (val result = firebase.fetchAllUserComplaints(userUid)) {
-                is ComplaintFetchResultInList.Success -> {
+            val isEmpty = dao.countUserComplaints(userUid) == 0
+            val lastTime = dataStoreManager.getLastSyncTime().first()
+            val filterTime = if (isEmpty) null else lastTime
+            return@withLock when (val result = firebase.fetchAllUserComplaints(userUid, filterTime)) {
+                is ComplaintFetchResultInList.Success-> {
                     dao.insertAll(result.data)
                     ComplaintResultInList.Success
                 }
-
                 is ComplaintFetchResultInList.Error -> {
-                    ComplaintResultInList.Error(message = result.error)
+                    ComplaintResultInList.Error(result.error)
                 }
-
                 ComplaintFetchResultInList.NotFound -> {
                     ComplaintResultInList.NotFound
                 }
-
-
             }
-
         }
-
     }
+
+    val pendingCountFlow = dao.observePendingCount()
+    val resolvedCountFlow = dao.observeResolvedCount()
 
     suspend fun observeUserOneComplaints(id: String): ComplaintDataRoom.ComplaintEntity? {
         return dao.getComplaint(id)
@@ -97,29 +110,9 @@ class UserComplaintsReadRepository @Inject constructor (private val dao: Complai
 
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun observeUserComplaints(): Flow<ComplaintUiStates> =
-        uidFlow
-            .distinctUntilChanged()// flat wants lambda returns flow<R> and map only wants R , so you have to manually return flowOf()
-            .flatMapLatest { userUid ->// all extension function return but return type depend on there last expression return type ex: flatMapLatest depend map
-                if(userUid==null) {
-                    flowOf(ComplaintUiStates.NotLogin("not login"))// flowOf for flow create
-                }
-                else{
-                    dao.observeComplaints(userUid as String).map { list ->
-                        if (list.isEmpty()) {
-                            ComplaintUiStates.Empty// lambda return last line return decide when both if else condtions are
-                        } else {
-                            ComplaintUiStates.Success(list)
-                        }
-                    }.distinctUntilChanged()// its full compare not only compare success
-                        .onStart {
-                            emit(ComplaintUiStates.Loading)
-                        }.catch { e ->
-                            emit(ComplaintUiStates.Error(e.message ?: "Something went wrong"))// emit() only emit value in existing flow
-                        }
-                }
-            }
+    fun observeRecentComplaints(): Flow<List<ComplaintEntity>> {
+        return dao.observeRecentComplaints()
+    }
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -149,14 +142,38 @@ class UserComplaintsReadRepository @Inject constructor (private val dao: Complai
                 started = SharingStarted.WhileSubscribed(0),
                 replay = 1
             )
-}
+//     private suspend fun currentUid(): String? =
+//        uidFlow.firstOrNull()
 
-sealed class ComplaintUiStates {
-    data object Loading : ComplaintUiStates()
-    data class Success(val data: List<ComplaintDataRoom.ComplaintEntity>) : ComplaintUiStates()
-    data class Error(val message: String) : ComplaintUiStates()
-    data object Empty : ComplaintUiStates()
-    data class NotLogin(val message: String):ComplaintUiStates()
+    private suspend fun currentUid(): String? =
+        withTimeoutOrNull(4000) {
+            uidFlow.filterNotNull().first()
+        }
+
+    fun getPagedComplaintsRepo(tab: HomeTab): Flow<PagingData<ComplaintEntity>> {
+
+        val pagingSourceFactory = when (tab) {
+            HomeTab.RECENT -> { { dao.getRecentComplaints() } }
+            HomeTab.PENDING -> { { dao.getPendingComplaints() } }
+            HomeTab.RESOLVED -> { { dao.getResolvedComplaints() } }
+        }
+
+        return Pager(
+            config = PagingConfig(pageSize = 10,enablePlaceholders = false),
+            pagingSourceFactory = pagingSourceFactory
+        ).flow
+    }
+
+
+
+
+
+
+
+
+
+
+
 }
 
 
@@ -164,6 +181,12 @@ sealed class ComplaintResultInList {
     data object Success : ComplaintResultInList()
     data class Error(val message: String) : ComplaintResultInList()
     data object Login:ComplaintResultInList()
-    data object NotFetch:ComplaintResultInList()
     data object NotFound:ComplaintResultInList()
 }
+
+
+
+
+
+
+

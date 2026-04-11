@@ -23,6 +23,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import app.cash.turbine.test
+import com.example.demo.complaintApp.DataStoreManager
 import com.example.demo.complaintApp.ProfileFetchRoom
 import com.example.demo.complaintApp.UserProfileDataStateRepository
 import com.example.demo.complaintApp.toEntity
@@ -45,14 +46,14 @@ class ExampleInstrumentedTest {
     private lateinit var daoComplaint: ComplaintDataRoom.ComplaintDao
     private lateinit var backendComplaint: UserComplaintsReadRepository
     private lateinit var db:AppDataBase
-
+    private lateinit var dataStoreManager: DataStoreManager
 
 
     @Before
     fun setup() {
         backendProfile= mockk()
         backendComplaint= mockk()
-
+        dataStoreManager= mockk()
        db = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
             AppDataBase::class.java
@@ -79,7 +80,8 @@ class ExampleInstrumentedTest {
             dao2 = daoComplaint,
             repo = backendComplaint,
             dispatcher,
-            dispatcher
+            dispatcher,
+            dataStoreManager
         )
     }
     private val fakeData= UserData(name = "animora", branch ="CSIT", rollNo = "cs89", phone = "89")
@@ -190,7 +192,6 @@ class ExampleInstrumentedTest {
             backendProfile.userDataProfileFetch(userId)
         }
 
-        //sdf
     }
 
 }

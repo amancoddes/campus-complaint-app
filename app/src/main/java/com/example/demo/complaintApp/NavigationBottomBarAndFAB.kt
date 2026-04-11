@@ -9,22 +9,29 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,24 +43,56 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.demo.complaintApp.AllRoute
 
 
 // first run
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RootScaffold(navController: NavHostController) {
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
+        topBar = {
+            if (shouldShowTopBar(navController)) {
 
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route
+
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = getTopBarTitle(currentRoute)
+                        )
+                    },
+                    navigationIcon = {
+                        if (navController.previousBackStackEntry != null) {
+                            IconButton(onClick = { navController.popBackStack() }) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowBackIosNew,
+                                    contentDescription = "Back"
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                )
+            }
+        },
         bottomBar = {
             if (shouldShowBottomBar(navController)) {
                 BottomAppBar {
-                    BottomBar(navController)
+                    BottomBar(navController)//
                 }
             }
-        },
+        }, containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
 
         floatingActionButton = {
             if (shouldShowFAP(navController)) {
@@ -61,16 +100,42 @@ fun RootScaffold(navController: NavHostController) {
             }
         },
 
-        floatingActionButtonPosition = FabPosition.Center   // ✅ allowed
+        floatingActionButtonPosition = FabPosition.End
     ) { innerPadding ->
 
         NavGraphSetup(// all screen open in it
             navControllerGraph = navController,
-            modifier = Modifier.padding(innerPadding)
+           innerPadding
         )
     }
 }
 
+@Composable
+fun shouldShowTopBar(navController: NavHostController): Boolean {
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route ?: return false
+
+    val isAuthFlow = currentRoute.startsWith("auth_")
+
+    val isFullScreenFlow = Regex(
+        "capture|preview|location_confirm|submit_success"
+    ).containsMatchIn(currentRoute)
+
+    return !isAuthFlow && !isFullScreenFlow
+}
+
+fun getTopBarTitle(route: String?): String {
+    return when {
+        route == "Home_Screens" -> "Home"
+        route?.startsWith("complaint_detail") == true -> "Complaint Details"
+        route == "profile" -> "My Profile"
+        route?.startsWith("auth_") == true -> ""
+        route?.contains("capture") == true -> "Capture Image"
+        route?.contains("preview") == true -> "Preview"
+        else -> "CityCare"
+    }
+}
 // function decide which screen bottom bar show
 @Composable
 fun shouldShowBottomBar(navController: NavHostController): Boolean {
@@ -195,9 +260,9 @@ fun createImageUri(context: Context): Uri? {
 }
 
 
-
 @Composable
 fun BottomBar(navController: NavHostController) {
+
     val items = listOf(
         AllRoute.Home,
         AllRoute.ReportList,
@@ -208,6 +273,7 @@ fun BottomBar(navController: NavHostController) {
     val currentDestination = navBackStackEntry?.destination
 
     NavigationBar {
+
         items.forEach { screen ->
 
             val selected = currentDestination?.hierarchy?.any {
@@ -217,37 +283,30 @@ fun BottomBar(navController: NavHostController) {
             NavigationBarItem(
                 selected = selected,
                 onClick = {
-                    val currentGraph = navController.currentBackStackEntry
-                        ?.destination?.parent?.route
-                    val targetGraph = screen.route
 
-                    //if (currentGraph != targetGraph) {
-                        // find main graph and home graph start destination safely
-                        val mainGraphNode = navController.graph.findNode("main_Graph") as? NavGraph
-                        val homeGraphNode = mainGraphNode?.findNode(AllRoute.Home.route) as? NavGraph
-                        val homeStartId = homeGraphNode?.startDestinationId
+                    if (selected) return@NavigationBarItem
 
-                        navController.navigate(targetGraph) {
-                            // only pop inside main_Graph, back to home’s start
-                            if (homeStartId != null) {
-                                popUpTo(homeStartId) {
-                                    inclusive = false
-                                    saveState = true
-                                }
-                            }
-                            launchSingleTop = true
-                            restoreState = true
+                    navController.navigate(screen.route) {
+
+                        // KEY LINE
+                        popUpTo("main_Graph") {
+                            saveState = true
                         }
-                  //  }
+
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 },
                 icon = {
                     screen.icon?.let {
                         Icon(it, contentDescription = screen.label ?: "")
                     }
                 },
+
                 label = { Text(screen.label ?: "") },
                 alwaysShowLabel = true
             )
+
         }
     }
 }
