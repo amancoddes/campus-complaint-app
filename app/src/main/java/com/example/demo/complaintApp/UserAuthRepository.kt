@@ -8,20 +8,22 @@ import javax.inject.Inject
 
 class UserAuthRepository @Inject constructor(val auth:FirebaseAuth,val firestore:FirebaseFirestore){
 
-   suspend fun singnUpRepo(email:String,password:String):Result<FirebaseUser?>{
-       return try {
+   suspend fun singnUpRepo(email: String, password: String): Result<FirebaseUser> {
+        return try {
+            val result = auth
+                .createUserWithEmailAndPassword(email, password)
+                .await()
 
-           auth.createUserWithEmailAndPassword(email,password).await()// create user in firebase
-           val user=auth.currentUser
+            val user = result.user
+                ?: return Result.failure(Exception("User creation failed"))
 
-           user?.sendEmailVerification()?.await()// send email link
+            user.sendEmailVerification().await()
 
-           Result.success(user)
-       }
-       catch (e:Exception){
-           Result.failure(e)
-       }
+            Result.success(user)
 
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     suspend fun isEmailVerified(): Boolean {

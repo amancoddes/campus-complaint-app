@@ -1,13 +1,14 @@
 package com.example.demo.complaintApp
 import android.util.Log
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.Source
+import com.google.type.Date
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
-
 
 sealed class ComplaintFetchResultInList {
     data class Success(val data: List<ComplaintDataRoom.ComplaintEntity>) : ComplaintFetchResultInList()
@@ -32,9 +33,9 @@ class ReportsRepoFirebase @Inject constructor(val firebase:FirebaseFirestore,val
 
 val result = withTimeout(10_000){
 
-    val db = FirebaseFirestore.getInstance()
 
-    val snapshot = db.collection("complaints")
+
+    val snapshot = firebase.collection("complaints")
         .whereGreaterThan("timestamp", cutoffTime) // recent only
         .whereEqualTo("status", "ACTIVE")       // only active
         .whereIn("hash", hashes)                 // tile + title filter
@@ -67,8 +68,8 @@ val result = withTimeout(10_000){
     if (hashes.isEmpty()) return Result.success(emptyList())
     return try {
         val result= withTimeout(10_000){
-            val db = FirebaseFirestore.getInstance()
-            val query = db.collection("complaints")
+
+            val query = firebase.collection("complaints")// there firebase sdk check current user get its token and send with request than firebase check the token and validate
                 .whereEqualTo("status", "ACTIVE")       // only active
                 .whereEqualTo("hash", hashes)                 // tile + title filter
                 //   .whereGreaterThan("timestamp", cutoffTime) // recent only
@@ -104,9 +105,9 @@ val result = withTimeout(10_000){
                 val query = if (lastSyncTime != null) {
 
                     val safeTime = lastSyncTime - 5 * 60 * 1000
-
+                    val safeTimestamp = Timestamp(java.util.Date(safeTime))
                     baseQuery
-                        .whereGreaterThan("updatedTime", safeTime)
+                        .whereGreaterThan("updatedTime", safeTimestamp)
                         .orderBy("updatedTime", Query.Direction.DESCENDING)
 
                 } else {
@@ -117,7 +118,23 @@ val result = withTimeout(10_000){
                 val snapshot = query.get(Source.SERVER).await()
 
 
-                snapshot.documents.mapNotNull { it.toObject(ComplaintDataRoom.ComplaintEntity::class.java) }
+                snapshot.documents.mapNotNull { doc ->
+                    val data = doc.toObject(FirstAppFireStoreDataClass::class.java)
+                    data?.let {
+                        ComplaintDataRoom.ComplaintEntity(
+                            id = it.id,
+                            complain = it.complain,
+                            description = it.description,
+                            timestamp = it.timestamp?.toDate()?.time ?: 0L,
+                            address = it.address,
+                            status = it.status,
+                            userId = it.userId,
+                            updatedTime = it.updatedTime?.toDate()?.time ?: 0L,
+                            url = it.imageUrl,
+                            resolvedImageUrl = it.resolvedImageUrl
+                        )
+                    }
+                }
 
             }
         if (complaint.isEmpty()){
@@ -152,11 +169,27 @@ val result = withTimeout(10_000){
                     .document(id)
                     .get()
                     .await()
+
                 if (!doc.exists()) {
                     null
                 } else {
-                    doc.toObject(ComplaintDataRoom.ComplaintEntity::class.java)
+                  val data=  doc.toObject(FirstAppFireStoreDataClass::class.java)
+                    data?.let {
+                        ComplaintDataRoom.ComplaintEntity(
+                            id = it.id,
+                            complain = it.complain,
+                            description = it.description,
+                            timestamp = it.timestamp?.toDate()?.time ?: 0L,
+                            address = it.address,
+                            status = it.status,
+                            userId = it.userId,
+                            updatedTime = it.updatedTime?.toDate()?.time ?: 0L,
+                            url = it.imageUrl,
+                            resolvedImageUrl = it.resolvedImageUrl
+                        )
+                    }
                 }
+
             }
             return result?.let {// let give grantee it is non null
                 ComplaintFetchResult.Success(it)
@@ -176,51 +209,6 @@ sealed class ComplaintFetchResult {
     data class Error(val exception: Exception) : ComplaintFetchResult()
 }
 
-
-
-
-
-
-
-//
-//    fun fetchAllUserComplaints(uid: String): Flow<ComplaintFetchResultInList> = callbackFlow {
-//
-//        val listenerRegistration = firebase
-//            .collection("complaints")
-//            .whereEqualTo("userId", uid)
-//            .orderBy("timestamp", Query.Direction.DESCENDING)
-//            .addSnapshotListener { snapshot, error ->
-//
-//                if (error != null) {
-//
-//                    trySend(
-//                        ComplaintFetchResultInList.Error(
-//                            error.message ?: "Firebase error"
-//                        )
-//                    )
-//
-//                    return@addSnapshotListener
-//                }
-//
-//                if (snapshot == null){
-//                    ComplaintFetchResultInList.NotFound
-//                    return@addSnapshotListener
-//                }
-//
-//                snapshot.documentChanges.forEach { change ->// its give list of changes ->  [change1, change2, change3]
-//
-//                    trySend(
-//                        ComplaintFetchResultInList.Success(change)
-//                    )
-//
-//                }
-//            }
-//
-//        awaitClose {
-//            listenerRegistration.remove()
-//        }
-//    }// there insert the room
-//
 
 
 

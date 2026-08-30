@@ -2,15 +2,10 @@ package com.example.soul
 
 import com.example.demo.complaintApp.ComplaintSubmissionRemoteDataSource
 import com.example.demo.complaintApp.ComplaintSubmissionRepository
-import com.example.demo.complaintApp.FireBaseComplaintSubmissionRemoteDataSource
 import com.example.demo.complaintApp.FirstAppFireStoreDataClass
-import com.google.common.base.Verify
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

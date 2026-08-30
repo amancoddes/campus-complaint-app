@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 class ProfileRepository @Inject constructor (
@@ -63,7 +65,10 @@ class ProfileRepository @Inject constructor (
                         .map { list ->
                             if (list==null) {
                                 ProfileFetchRoom.Empty
-                            } else {  ProfileFetchRoom.Success(list)  }
+                            } else {
+                                print("its run success")
+                                ProfileFetchRoom.Success(list)
+                            }
                         }.distinctUntilChanged()
                         .onStart {
                             emit(ProfileFetchRoom.Loading)
@@ -73,10 +78,10 @@ class ProfileRepository @Inject constructor (
                         }
                 }
             }
-
-
     private suspend fun currentUid(): String? =
-        repo.uidFlow.firstOrNull()// wait and give first value and when its give null and flow not give any value so its simply return the null not throw exception like first()
+        withTimeoutOrNull(4000) {
+           repo.uidFlow.filterNotNull().first()
+        } // wait and give first value and when its give null and flow not give any value so its simply return the null not throw exception like first()
 /*
 without .distinctUntilChanged
 

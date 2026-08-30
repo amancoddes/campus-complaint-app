@@ -43,19 +43,21 @@ class UserAllComplaintsScreenViewModel @Inject constructor( private val reposito
     val uiEvent = _uiEvent.asSharedFlow()
 
     fun retrySync() {
-        _uiState.value = HomeUiState.Loading
         syncOnce()
+
     }
     private var isSynced = false
 
 
 
     fun syncOnce() {
-        if (isSynced) return
+        Log.e("sync","sync return or not ")
+      //  if (isSynced) return
 
-        isSynced = true
+        //isSynced = true
+        Log.e("sync"," sync not return not ")
+
         viewModelScope.launch {
-            // delay(2000)
             _uiState.value = HomeUiState.Loading
 
             try {
@@ -86,6 +88,7 @@ class UserAllComplaintsScreenViewModel @Inject constructor( private val reposito
                 }
 
             } catch (e: Exception) {
+                _uiState.value = HomeUiState.Error(e.message?:"something wrong")
                 _uiEvent.emit("Something went wrong")
             }
         }

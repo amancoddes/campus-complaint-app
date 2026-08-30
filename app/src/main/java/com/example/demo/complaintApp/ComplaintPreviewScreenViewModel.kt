@@ -1,9 +1,12 @@
 package com.example.demo.complaintApp
 
 import android.location.Location
+import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.demo.complaintApp.di.HiltDependencies
@@ -25,6 +28,13 @@ class ComplaintPreviewScreenViewModel @Inject constructor(private val repository
 
 ):ViewModel() {
 
+
+
+    private var selectedImageUri by mutableStateOf<Uri?>(null)
+
+    fun setImageUri(uri: Uri) {
+        selectedImageUri = uri
+    }
     //Complain building
     private val _building = mutableStateOf("")
     val building: State<String> = _building
@@ -173,7 +183,6 @@ class ComplaintPreviewScreenViewModel @Inject constructor(private val repository
                 }
 
                 Decision.ALLOW_NEW -> {
-
                     val centerTile = buildCenterKey(loc.latitude, loc.longitude, 4)
                     val complainPincode = makeHash(
                         mode = Mode.OUTDOOR,
@@ -183,6 +192,30 @@ class ComplaintPreviewScreenViewModel @Inject constructor(private val repository
                             _snackbarEvent.emit(it)
                         })
 
+
+
+
+
+                    val imageUrl = if (selectedImageUri != null){
+                        val result = withContext(ioDispatcher) {
+                            repository.uploadImage(selectedImageUri!!)
+                        }
+
+                        result.getOrElse {
+                            _uiState.value = ComplaintUiState.Idle
+                            _snackbarEvent.emit("Image upload failed.. ❌")
+                            return@launch
+                        }
+                    } else null
+
+
+
+                    if (imageUrl == null) {
+                        _snackbarEvent.emit("Image not found")
+                        return@launch
+                    }
+
+
                     val dataComplain = complainPincode?.let {
                         FirstAppFireStoreDataClass(
                             complain = _complain.value,
@@ -191,9 +224,10 @@ class ComplaintPreviewScreenViewModel @Inject constructor(private val repository
                             latitude = loc.latitude,
                             longitude = loc.longitude,
                             confidence = confidence,
-                            hash = it,
+                            hash = it,//
                             accuracy = loc.accuracy,
-                            mode = Mode.OUTDOOR
+                            mode = Mode.OUTDOOR,
+                            imageUrl = imageUrl
                         )
                     } ?: run {
                         _uiState.value = ComplaintUiState.Idle
@@ -210,7 +244,7 @@ class ComplaintPreviewScreenViewModel @Inject constructor(private val repository
                     result.fold(
                         onSuccess = { id ->
                             _uiState.value = ComplaintUiState.Success(id)
-                         //   userRepoComplint.fetchNewComplaint(id)
+                           userRepoComplint.fetchNewComplaint(id)
                             return@launch
                         },
                         onFailure = { e ->
@@ -286,7 +320,7 @@ class ComplaintPreviewScreenViewModel @Inject constructor(private val repository
                     viewModelScope.launch(mainDispatcher) {
                         print("else run 😃😖🥰")
                         _uiState.value=ComplaintUiState.Idle
-                        _snackbarEvent.emit("some thing wrong location not precise")
+                        _snackbarEvent.emit("unable to fetch location")
                     }
                 }
             },
@@ -341,7 +375,7 @@ Latitude hamesha pehle, Longitude baad me
 //    }
 
 
-    fun insideSendComplain()=viewModelScope.launch(mainDispatcher) {
+    fun insideSendComplain()=viewModelScope.launch {
         _uiState.value = ComplaintUiState.Loading
 
         Log.e("validateInside"," start complaint validation")
@@ -397,16 +431,34 @@ val check = checkBuilding(location = loc, building = _building.value, buildNotMa
             when(decisionInside){
                 DecisionInside.Accept->{
 
+
+                    val imageUrl = if (selectedImageUri != null){
+                        val result = withContext(ioDispatcher) {
+                            repository.uploadImage(selectedImageUri!!)
+                        }
+
+                        result.getOrElse {
+                            _uiState.value = ComplaintUiState.Idle
+                            _snackbarEvent.emit("Image upload failed *  ❌")
+                            return@launch
+                        }
+                    } else null
+
+
+
+                    if (imageUrl == null) {
+                        _snackbarEvent.emit("Image not found")
+                        return@launch
+                    }
+
+                    Log.e("imageUrl","they $imageUrl")
                     val dataComplainInside = FirstAppFireStoreDataClass(
                         complain = _complain.value,
                       //  description = _description.value,
                         address = _building.value,
-                       // latitude = loc.latitude,
-                      //  longitude = loc.longitude,
                         mode = Mode.INDOOR,
                         hash = hashInside,
-                      //  accuracy = loc.accuracy,
-                        //mode = Mode.OUTDOOR
+                        imageUrl = imageUrl,
                     )
 
                     val resultInside = withContext(ioDispatcher) {
@@ -416,7 +468,7 @@ val check = checkBuilding(location = loc, building = _building.value, buildNotMa
                         onSuccess = { id ->
 
                             _uiState.value = ComplaintUiState.Success(id)
-                            userRepoComplint.fetchNewComplaint(id)
+                           userRepoComplint.fetchNewComplaint(id)
                             return@launch
                         },
                         onFailure = { e ->

@@ -89,22 +89,24 @@ class UserComplaintsReadRepository @Inject constructor (private val dao: Complai
     val pendingCountFlow = dao.observePendingCount()
     val resolvedCountFlow = dao.observeResolvedCount()
 
-    suspend fun observeUserOneComplaints(id: String): ComplaintDataRoom.ComplaintEntity? {
+    suspend fun observeUserOneComplaints(id: String): ComplaintEntity? {
         return dao.getComplaint(id)
     }
 
-    suspend fun fetchNewComplaint(id: String) = mutex.withLock {// add update when make admin app
+    suspend fun fetchNewComplaint(id: String): RefreshResult = mutex.withLock {// add update when make admin app
         when (val result = firebase.fetchSingleComplaint(id)) {
             is ComplaintFetchResult.Success -> {
                 dao.insertComplaint(result.data)
+                RefreshResult.Success
             }
 
             is ComplaintFetchResult.Error -> {
 
+                RefreshResult.Error(result.exception.message ?: "Unknown error")
             }
 
-            is ComplaintFetchResult.NotFound -> {
-
+            ComplaintFetchResult.NotFound -> {
+                RefreshResult.NotFound
             }
         }
 
@@ -188,5 +190,10 @@ sealed class ComplaintResultInList {
 
 
 
+sealed class RefreshResult {
+    object Success : RefreshResult()
+    object NotFound : RefreshResult()
+    data class Error(val message: String) : RefreshResult()
+}
 
 

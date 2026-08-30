@@ -1,10 +1,11 @@
 package com.example.demo.complaintApp
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,33 +15,39 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
-import coil.compose.rememberAsyncImagePainter
-
-
-
-
-
-
+import coil.compose.AsyncImage
 
 
 @Composable
@@ -49,13 +56,25 @@ fun ComplaintDetailScreen(
     viewModel: ComplaintDetailViewModel,
     navHostController: NavHostController
 ) {
+
+    val snackBarHost = remember {
+        SnackbarHostState()
+    }
+    LaunchedEffect(Unit) {
+        viewModel.snackBarEvent.collect{
+            snackBarHost.showSnackbar(it)// its add message in queue give signal to UI and its change the state
+        }
+    }
+
     val complaint by viewModel.complaint.collectAsState()
     val loading by viewModel.loading.collectAsState()
 
     LaunchedEffect(id) {
-        viewModel.load(id)
+        viewModel.roomLoad(id)
     }
-    Scaffold(topBar = {
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackBarHost) },// its observe the state of snackBarHost state , its show the snack bar on Ui
+        topBar = {
         CommonTopAppBar(
             title = "complaint",
             onBackClick = {navHostController.popBackStack() }
@@ -112,7 +131,9 @@ fun ComplaintDetailContent(
     buttonText: String,
     padding: PaddingValues
 ) {
-
+    var selectedImage by remember {
+        mutableStateOf<String?>(null)
+    }
     val isResolved = item.status == "RESOLVED"
 
     Column(
@@ -130,14 +151,24 @@ fun ComplaintDetailContent(
         ) {
             Box {
 
-                Image(
-                    painter = rememberAsyncImagePainter(R.drawable.screenshot_2026_04_02_at_5_50_22pm),
+                AsyncImage(
+                    model = item.url,
                     contentDescription = null,
+                    placeholder = painterResource(R.drawable.ic_launcher_foreground),
+                    error = painterResource(R.drawable.imagedefault),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(0.9f),
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable {
+                            selectedImage = item.url
+                        },
                     contentScale = ContentScale.Crop
                 )
+
+Spacer(Modifier.height(10.dp))
+
+
 
                 // Status Badge
                 Box(
@@ -161,12 +192,70 @@ fun ComplaintDetailContent(
 
         Spacer(Modifier.height(16.dp))
 
+
+        AsyncImage(
+            model = item.resolvedImageUrl,
+            contentDescription = null,
+            placeholder = painterResource(R.drawable.ic_launcher_foreground),
+            error = painterResource(R.drawable.imagedefault),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .clickable {
+                    selectedImage = item.resolvedImageUrl
+                },
+            contentScale = ContentScale.Crop
+        )
+
+
+        if (selectedImage != null) {
+
+            Dialog(
+                onDismissRequest = {
+                    selectedImage = null
+                }
+            ) {
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black)
+                ) {
+
+                    AsyncImage(
+                        model = selectedImage,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit
+                    )
+
+                    IconButton(
+                        onClick = {
+                            selectedImage = null
+                        },
+                        modifier = Modifier.align(
+                            Alignment.TopEnd
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
         //  Complaint Info
         Card(
             shape = RoundedCornerShape(18.dp),
             elevation = CardDefaults.cardElevation(6.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
 
                 Text("Complaint", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Text(item.complain, fontSize = 15.sp)
@@ -234,7 +323,9 @@ fun ComplaintDetailPreview() {
         description = "Garbage lying on the road for 3 days Garbage lying on the road for 3 days Garbage lying on the road for 3 days Garbage lying on the road for 3 days",
         address = "Meerut, UP",
         status = "PENDING",
-        timestamp = System.currentTimeMillis()
+        timestamp = System.currentTimeMillis(),
+        url = "",
+        resolvedImageUrl = ""
     )
 
     ComplaintDetailContent(

@@ -7,10 +7,12 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.net.Uri
+import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -65,6 +67,48 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
+
+
+
+
+
+
+@Composable
+fun PreviewPageContent(
+    nav: NavHostController,
+    imageUri: Uri?,
+    viewModel: ComplaintPreviewScreenViewModel
+) {
+
+    val title by viewModel.complainView
+    val desc by viewModel.descriptionView
+    val address by viewModel.addressView
+    val location by viewModel.location.collectAsState()
+
+    DisposableEffect(Unit) {
+        onDispose { viewModel.cancel() }
+    }
+
+    PreviewContent(
+        imageUri = imageUri,
+        complainTitle = title,
+        description = desc,
+        address = address,
+        locationAvailable = location != null,
+
+        onBack = { nav.popBackStack() },
+        onTitleChange = { viewModel.updateComplain(it) },
+        onDescriptionChange = { viewModel.updateDescription(it) },
+        onAddressChange = { viewModel.updateAddress(it) },
+        onLocationClick = { viewModel.fetchLocation() },
+        onSubmit = {
+            if (imageUri != null) {
+                viewModel.setImageUri(imageUri)
+            }
+            viewModel.sendComplain()
+        }
+    )
+}
 
 
 @Composable
@@ -256,6 +300,56 @@ fun PreviewContent(
 
             Spacer(Modifier.height(20.dp))
 
+
+
+
+
+            // Result ApI for show dialog of location gps
+            val activityContext = LocalContext.current
+// its notes 69, see down
+
+            val context = activityContext.applicationContext
+
+            // check gps onn or off but its not check permission its simply check hardware onn or off
+            //	•	isProviderEnabled() = Binder IPC ke through system se poochta hai
+            @RequiresApi(Build.VERSION_CODES.P)
+            fun isLocationEnabled(): Boolean {
+                val lm =
+                    context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                return lm.isLocationEnabled }
+
+            fun openLocationSettings() {
+                activityContext.startActivity(
+                    Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)// Settings.ACTION_LOCATION_SOURCE_SETTINGS its a shorcut
+                )
+            }
+
+            val permissionLauncher =
+                rememberLauncherForActivityResult(// esme context dene ki jarat hie nhi khud esko activity ka context mil jata hai or dialog show karne ke liye activity ka hie context chahiye
+                    contract = ActivityResultContracts.RequestPermission()
+                ) { granted ->
+
+                    if (granted) {
+
+                        if (!isLocationEnabled()) {
+                            openLocationSettings()
+                            return@rememberLauncherForActivityResult
+                        } else {
+                            Log.e(
+                                "location",
+                                "from call Resutl api location check and run and call the viewmodel "
+                            )
+                            onLocationClick()
+                        }
+                    } else {
+                        Toast.makeText(
+                            context,// ye os show karta hai esliye use the application context
+                            "Location permission is required!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                }
             // Location Card
             Card(
                 shape = RoundedCornerShape(18.dp),
@@ -265,7 +359,28 @@ fun PreviewContent(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onLocationClick() }
+                        .clickable {
+                            val granted = ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.ACCESS_FINE_LOCATION//Runtime me FINE request karne se COARSE bhi milta hai
+                            ) == PackageManager.PERMISSION_GRANTED//Any Context  sirf read or dialog show karne ke liye chiye activity context lekin
+                            /*
+                        Status read karne me Application context bhi chalega.
+Dialog dikhane ke liye Activity zaroori hai — aur launcher already Activity se linked hai.
+                         */
+
+
+                            if (!granted) {
+                                permissionLauncher.launch(input = Manifest.permission.ACCESS_FINE_LOCATION)
+                                return@clickable
+                            }
+
+                            if (!isLocationEnabled()) {
+                                openLocationSettings()
+                                return@clickable
+                            }
+                            onLocationClick()
+                         }
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -307,39 +422,6 @@ fun PreviewContent(
 }
 
 
-
-@Composable
-fun PreviewPageContent(
-    nav: NavHostController,
-    imageUri: Uri?,
-    viewModel: ComplaintPreviewScreenViewModel
-) {
-
-    val title by viewModel.complainView
-    val desc by viewModel.descriptionView
-    val address by viewModel.addressView
-    val location by viewModel.location.collectAsState()
-
-    DisposableEffect(Unit) {
-        onDispose { viewModel.cancel() }
-    }
-
-    PreviewContent(
-        imageUri = imageUri,
-        complainTitle = title,
-        description = desc,
-        address = address,
-        locationAvailable = location != null,
-
-        onBack = { nav.popBackStack() },
-        onTitleChange = { viewModel.updateComplain(it) },
-        onDescriptionChange = { viewModel.updateDescription(it) },
-        onAddressChange = { viewModel.updateAddress(it) },
-        onLocationClick = { viewModel.fetchLocation() },
-        onSubmit = { viewModel.sendComplain() }
-    )
-}
-
 @Preview(showBackground = true)
 @Composable
 fun PreviewScreenPreview() {
@@ -361,261 +443,6 @@ fun PreviewScreenPreview() {
 }
 
 
-//
-//@OptIn(ExperimentalMaterial3Api::class)
-//@Composable
-//fun PreviewPageContent(
-//    navHostController: NavHostController,
-//    imageUri: Uri? = null,
-//    // ye home ka viewmodel nhi hai preview outside complaint ka hai
-//    viewModel:ComplaintPreviewScreenViewModel
-//) {
-//
-//    DisposableEffect(Unit) {
-//        onDispose {
-//            viewModel.cancel()
-//        }
-//    }
-//
-//
-//    Scaffold(
-//        topBar = {
-//            TopAppBar(
-//                title = { Text("Preview") },
-//                navigationIcon = {
-//                    IconButton(onClick = {navHostController.popBackStack()}) {
-//                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-//                    }
-//                },
-//                colors = TopAppBarDefaults.topAppBarColors(
-//                    containerColor = MaterialTheme.colorScheme.surface,
-//                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-//                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
-//                )
-//            )
-//        }
-//    ) { padding ->
-//        Surface(
-//            color = MaterialTheme.colorScheme.background,
-//            modifier = Modifier
-//                .fillMaxSize()
-//                .padding(padding)
-//        ) {
-//            Column(
-//                modifier = Modifier
-//                    .fillMaxSize()
-//                    .verticalScroll(rememberScrollState())
-//                    .padding(horizontal = 16.dp, vertical = 12.dp)
-//            ) {
-//                // Top image preview (placeholder — replace with actual rememberAsyncImagePainter)
-//                Surface(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .height(300.dp),
-//                    shape = MaterialTheme.shapes.medium,
-//                    tonalElevation = 2.dp
-//                ) {
-//                    Image(
-//                        painter = rememberAsyncImagePainter(model = imageUri),
-//                        contentDescription = null,
-//                        modifier = Modifier
-//                            .padding(horizontal = 16.dp)
-//                            .fillMaxWidth()
-//                            .height(300.dp),
-//                        contentScale = ContentScale.Crop
-//                    )
-//                }
-//
-//                Spacer(modifier = Modifier.height(20.dp))
-/////
-//
-//
-//                ///
-//                //  \title dropdown selector
-//
-//
-//              val x=  listOf(
-//                    "Garbage not collected",
-//                    "Water leakage",
-//                    "Street light not working",
-//                    "Road pothole",
-//                    "Drain overflow",
-//                    "Tree fallen\branch blocking road",
-//                    "Noise complaint",
-//                )
-//                val complainTitle2 by viewModel.complainView
-//// not send callback for complainTitle jab viewmodel ke state mei change hoga to wasa bhi re compose kar dega screen ko
-//                TitleDropdownSelector(boxShow = "choose complaint",
-//                    modifier = Modifier.fillMaxWidth(), listTitles = x, complainTitle = complainTitle2, onTitleSelected = {new ->
-//                        println("value change title 26-12-25 code test🥸😃 , $new")
-//                        viewModel.updateComplain(new)
-//                    }
-//                )
-//
-//
-//
-//
-//                Spacer(modifier = Modifier.height(20.dp))
-//
-//
-//                // Address (simple editable field)
-//
-//               val description by viewModel.descriptionView
-//                OutlinedTextField(
-//                    value = description,
-//                    onValueChange = { viewModel.updateDescription(it) },
-//                    label = {
-//                        Text("description")
-//                    },
-//                    minLines = 1,
-//                    maxLines = 2,
-//                    modifier = Modifier.fillMaxWidth(),
-//                    supportingText = {
-//                        Text("opt/*")
-//                    }
-//                )
-//
-//
-//
-//                Spacer(modifier = Modifier.height(20.dp))
-//
-//
-//                val address by viewModel.addressView
-//                OutlinedTextField(
-//                    value = address,
-//                    onValueChange = { viewModel.updateAddress(it) },
-//                    label = {
-//                        Text("add address")
-//                    },
-//                    minLines = 1,
-//                    maxLines = 2,
-//                    modifier = Modifier.fillMaxWidth()
-//                )
-//
-//                Spacer(modifier = Modifier.height(20.dp))
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-///// LOCATION FETCHING
-//
-//                // Result ApI for show dialog of location gps
-//                val context2 = LocalContext.current
-//// its notes 69, see down
-//
-//val context=context2.applicationContext
-//                // check gps onn or off but its not check permission its simply check hardware onn or off
-//                //	•	isProviderEnabled() = Binder IPC ke through system se poochta hai
-//                fun isLocationEnabled(): Boolean {
-//                    val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-//                    return lm.isProviderEnabled(LocationManager.GPS_PROVIDER) ||// ye method indirectly 1 level ke baad Binder IPC automatically trigger hota hai
-//                            lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-//                }
-//
-//                fun openLocationSettings() {
-//                    context2.startActivity(
-//                        Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)// Settings.ACTION_LOCATION_SOURCE_SETTINGS its a shorcut
-//                    )
-//                }
-//                val permissionLauncher= rememberLauncherForActivityResult(// esme context dene ki jarat hie nhi khud esko activity ka context mil jata hai or dialog show karne ke liye activity ka hie context chahiye
-//                    contract = ActivityResultContracts.RequestPermission()
-//                ){granted->
-//
-//                    if(granted){
-//
-//                        if(!isLocationEnabled()){
-//                            openLocationSettings()
-//                            return@rememberLauncherForActivityResult
-//                        }
-//                        else{
-//                            Log.e("location","from call Resutl api location check and run and call the viewmodel ")
-//                            viewModel.fetchLocation()
-//                        }
-//                    }
-//                    else{
-//                        Toast.makeText(
-//                            context,// ye os show karta hai esliye use the application context
-//                            "Location permission is required!",
-//                            Toast.LENGTH_SHORT
-//                        ).show()
-//                    }
-//
-//                }
-//
-//
-//
-//
-//
-//                Row(verticalAlignment = Alignment.CenterVertically) {
-//                    Text(
-//                        text = "fetch my Location",
-//                        style = MaterialTheme.typography.titleLarge
-//                    )
-//                    Spacer(modifier = Modifier.width(20.dp))
-//
-//                    IconButton(onClick = {
-//                        val granted = ContextCompat.checkSelfPermission(
-//                            context,
-//                            Manifest.permission.ACCESS_FINE_LOCATION//Runtime me FINE request karne se COARSE bhi milta hai
-//                        ) == PackageManager.PERMISSION_GRANTED//Any Context  sirf read or dialog show karne ke liye chiye activity context lekin
-//                        /*
-//                        Status read karne me Application context bhi chalega.
-//Dialog dikhane ke liye Activity zaroori hai — aur launcher already Activity se linked hai.
-//                         */
-//
-//
-//                                if(!granted) {
-//                            permissionLauncher.launch(input = Manifest.permission.ACCESS_FINE_LOCATION)
-//                            return@IconButton
-//                        }
-//
-//                        if(!isLocationEnabled()){
-//                           openLocationSettings()
-//                            return@IconButton
-//                        }
-//                        viewModel.fetchLocation()
-//                    }) {
-//                        Icon(imageVector = Icons.Default.LocationOn, contentDescription = null, tint = Color.Red)
-//                    }
-//                }
-//                // end of location
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//                Spacer(modifier = Modifier.height(36.dp))
-//val locationCheck by viewModel.location.collectAsState()
-//                // Save button placeholder (no onSave logic as requested)
-//                Button(enabled = locationCheck != null,
-//                    onClick = {
-//
-//                            if (imageUri != null) {
-//                                viewModel.sendComplain()
-//                                //imageUri
-//                        }
-//                        else{
-//                            println("image is null")
-//                        }
-//                    },
-//                    modifier = Modifier
-//                        .align(Alignment.CenterHorizontally)
-//                        .widthIn(min = 160.dp)
-//                ) {
-//                    Text(if(locationCheck!=null) "submit" else "fill")
-//                }
-//            }
-//        }
-//    }
-//}
+
+
+

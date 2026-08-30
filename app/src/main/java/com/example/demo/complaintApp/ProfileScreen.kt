@@ -70,12 +70,15 @@ fun ProfileScreen(viewModel: ProfileScreenViewModel,navHostController: NavHostCo
 
                 is CombineProfileFetchState.Empty -> {
                     AddMethod(error = "add profile",paddingValues, onLogout = {
-                        FirebaseAuth.getInstance().signOut()
-                        viewModel.logoutDeleteRoom()
 
-                        navHostController.navigate("login/signup") {
-                            popUpTo("main_Graph") { inclusive = true }
+                        FirebaseAuth.getInstance().signOut()
+                        viewModel.onLogout {
+                            navHostController.navigate("login/signup") {
+                                popUpTo("main_Graph") { inclusive = true }
+                            }
                         }
+
+
                     })
                 }
             }

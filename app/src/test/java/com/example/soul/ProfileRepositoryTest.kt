@@ -214,6 +214,7 @@ private val fakeData=UserData(name = "animora", branch ="CSIT", rollNo = "cs89",
         val userId = "id69"
         every { backendComplaint.uidFlow } returns flowOf(userId)
         coEvery { daoProfile.observeUser(any()) } returns flowOf(null)
+        // flow testing turbine
         profileRepository.observeUserInfo().test {
             assertEquals(ProfileFetchRoom.Loading,awaitItem())
             assertEquals(ProfileFetchRoom.Empty,awaitItem())

@@ -19,8 +19,6 @@ class MainActivity : ComponentActivity() {
 
           val navController= rememberNavController()// main app
             CityCareTheme(content = { RootScaffold(navController = navController) })
-
-
         }
 
     }

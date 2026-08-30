@@ -16,7 +16,6 @@ import javax.inject.Inject
 @HiltViewModel
 class SignUpScreenViewModel @Inject constructor(
     private val repo: UserAuthRepository,
-    private val sessionManager: SessionManager,
     private val auth:FirebaseAuth
 ) : ViewModel() {
 
@@ -45,7 +44,6 @@ class SignUpScreenViewModel @Inject constructor(
     fun onVerificationSuccess() {
         val uid = auth.currentUser?.uid ?: return
         Log.e("listener","listener start from the email verification 🌞")
-        sessionManager.onLogin(uid)
     }
 
     fun signUp() {

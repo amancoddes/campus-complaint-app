@@ -1,7 +1,6 @@
 package com.example.demo.complaintApp
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ErrorOutline
@@ -125,21 +123,11 @@ fun LoadingSection(
         ) {
 
 
-//            Box(
-//                contentAlignment = Alignment.Center,
-//                modifier = Modifier
-//                    .size(90.dp)
-//                    .background(
-//                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.1f),
-//                        shape = CircleShape
-//                    )
-//            ) {
 
                 CircularProgressIndicator(
                     strokeWidth = 4.dp,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
-         //   }
 
             Spacer(modifier = Modifier.height(20.dp))
 

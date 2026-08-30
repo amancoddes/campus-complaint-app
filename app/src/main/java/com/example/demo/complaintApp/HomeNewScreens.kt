@@ -1,5 +1,6 @@
 package com.example.demo.complaintApp
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,13 +32,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 
 @Composable
 fun HomeContent(
     recent: List<ComplaintDataRoom.ComplaintEntity>,
     pending: Int,
     resolved: Int,
-    onViewAllClick: () -> Unit
+    onViewAllClick: () -> Unit,
+    onNaviClick: (ComplaintDataRoom.ComplaintEntity) -> Unit,
+    onNaviOpenAllComplaint:() -> Unit
 ) {
 
     LazyColumn(
@@ -55,15 +60,15 @@ fun HomeContent(
             ) {
                 StatCard("Pending", pending, Brush.linearGradient(
                     listOf(Color(0xFFFFA726), Color(0xFFFF7043))
-                ))
+                ),onNaviOpenAllComplaint)
 
                 StatCard("Resolved", resolved, Brush.linearGradient(
                     listOf(Color(0xFF26A69A), Color(0xFF66BB6A))
-                ))
+                ),onNaviOpenAllComplaint)
 
                 StatCard("Total", pending + resolved, Brush.linearGradient(
                     listOf(Color(0xFF90A4AE), Color(0xFFB0BEC5))
-                ))
+                ),onNaviOpenAllComplaint)
             }
         }
 
@@ -89,7 +94,7 @@ fun HomeContent(
 
         //  List
         items(recent.take(5)) {
-            ComplaintCard(it)
+            ComplaintCard(it, onNaviClick =onNaviClick)
         }
     }
 }
@@ -97,14 +102,17 @@ fun HomeContent(
 fun RowScope.StatCard(
     title: String,
     count: Int,
-    brush: Brush
+    brush: Brush,onNaviOpenAllComplaint: () -> Unit
 ) {
 
     Card(
         modifier = Modifier
             .weight(1f)
             .height(90.dp),
-        shape = RoundedCornerShape(18.dp)
+        shape = RoundedCornerShape(18.dp),
+        onClick = {
+            onNaviOpenAllComplaint()
+        }
     ) {
         Box(
             modifier = Modifier
@@ -126,19 +134,24 @@ fun RowScope.StatCard(
     }
 }
 @Composable
-fun ComplaintCard(item: ComplaintDataRoom.ComplaintEntity) {
+fun ComplaintCard(item: ComplaintDataRoom.ComplaintEntity,onNaviClick: (ComplaintDataRoom.ComplaintEntity) -> Unit) {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
+        onClick = {
+            onNaviClick(item)
+        }
        // elevation = CardDefaults.cardElevation(8.dp)
     ) {
 
         Box {
-
-            Image(
-                painter = painterResource(R.drawable.imagegreeting),
+            Log.e("IMAGE_URL", "  value is -> ${item.url}")
+            AsyncImage(
+                model = item.url,
                 contentDescription = null,
+                placeholder = painterResource(R.drawable.ic_launcher_foreground),
+                error = painterResource(R.drawable.imagedefault),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(140.dp),

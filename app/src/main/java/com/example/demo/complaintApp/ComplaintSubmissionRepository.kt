@@ -1,14 +1,11 @@
 package com.example.demo.complaintApp
 
 
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
+import android.net.Uri
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.TimeoutCancellationException
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 
 class ComplaintSubmissionRepository @Inject constructor(private val backendRepo:ComplaintSubmissionRemoteDataSource) {
@@ -19,6 +16,44 @@ class ComplaintSubmissionRepository @Inject constructor(private val backendRepo:
     }
 
 
+    private val storageRef =// its give the ref of starting point not give any folder ref
+        FirebaseStorage.getInstance().reference// add in hilt
+    val userId = FirebaseAuth.getInstance().currentUser?.uid
+    suspend fun uploadImage(uri: Uri): Result<String> {
+        return try {
+            val fileName = "complaintImages/$userId/${System.currentTimeMillis()}.jpg"
+
+            Log.e("there1","  -> $userId")
+            val imageRef = storageRef.child(fileName)
+
+
+
+            Log.e("there1"," going upload")
+            // upload
+
+            Log.e(
+                "URI_CHECK",
+                uri.toString()
+            )
+            imageRef.putFile(uri).await()
+            Log.e("there1"," after upload")
+
+
+
+
+
+            // url
+
+            val downloadUrl = imageRef.downloadUrl.await()
+            Log.e("there1"," download url $downloadUrl")
+
+            Result.success(downloadUrl.toString())
+
+        } catch (e: Exception) {
+            Log.e("there1","${e.message}")
+            Result.failure(e)
+        }
+    }
 
 
 // paging 3

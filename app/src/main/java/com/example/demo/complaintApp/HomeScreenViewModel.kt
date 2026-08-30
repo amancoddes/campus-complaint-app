@@ -113,7 +113,7 @@ class HomeScreenViewModel @Inject constructor(private val repository: UserCompla
 
     private var isSynced = false
     fun syncOnce() {
-        if (isSynced) return
+        //if (isSynced) return
 
         isSynced = true
         viewModelScope.launch {

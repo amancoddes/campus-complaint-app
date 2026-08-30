@@ -71,9 +71,11 @@ fun HomeScreen(uiState: HomeUiState, snackbarHostState: SnackbarHostState, onRet
                     EmptySection()
                 }
                 is HomeUiState.Error -> {
+                    Log.e("loading check "," there error ")
                     ErrorSection( message = uiState.message, onRetry = onRetry)
                 }
                 is HomeUiState.Loading -> {
+                    Log.e("loading check "," there 2")
                     LoadingSection()
                 }
                 is HomeUiState.NotLogin -> {
@@ -120,8 +122,8 @@ fun HomeScreen(uiState: HomeUiState, snackbarHostState: SnackbarHostState, onRet
 
 
 val fakeList = listOf(
-    ComplaintDataRoom.ComplaintEntity("1", "Complaint 1", "PENDING", 0L),
-    ComplaintDataRoom.ComplaintEntity("2", "Complaint 2", "RESOLVED", 0L)
+    ComplaintDataRoom.ComplaintEntity("1", "Complaint 1", "PENDING", 0L, url = "", resolvedImageUrl = ""),
+    ComplaintDataRoom.ComplaintEntity("2", "Complaint 2", "RESOLVED", 0L, url = "", resolvedImageUrl = "")
 )
 
 

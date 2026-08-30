@@ -16,7 +16,6 @@ import javax.inject.Inject
 @HiltViewModel
 class SplashScreenViewModel @Inject constructor(
     private val auth: FirebaseAuth,
-    val repository: ListenerRepository
 ) : ViewModel() {
 
     private val _startDestination = MutableStateFlow<String?>(null)
@@ -43,7 +42,7 @@ class SplashScreenViewModel @Inject constructor(
                 }  // not logged in
 
                 user.isEmailVerified ->{
-                    repository.startListening(user.uid)
+
                     Log.e("listener"," listener start ")
                     _startDestination.value = "main_Graph"
                 }

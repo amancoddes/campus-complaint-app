@@ -6,17 +6,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 
 @HiltViewModel
-class ProfileScreenViewModel @Inject constructor(private val profileRepo: ProfileRepository,private val sessionManager: SessionManager):ViewModel(){
+class ProfileScreenViewModel @Inject constructor(private val profileRepo: ProfileRepository):ViewModel(){
 
 
 
@@ -71,18 +73,21 @@ class ProfileScreenViewModel @Inject constructor(private val profileRepo: Profil
 
 
 
-    fun cancelListener(){
-        sessionManager.onLogout()
+
+    fun onLogout(onDone: () -> Unit) {
+        _profileFetching.value=ProfileFetchState.Loading
+        viewModelScope.launch {
+
+            logoutDeleteRoom()   // suspend call
+            onDone()             // UI signal
+        }
     }
 
 
-
-
-    fun logoutDeleteRoom(){
-        viewModelScope.launch(Dispatchers.IO){
-            profileRepo.logout()
-
-        }
+     private suspend fun logoutDeleteRoom(){
+         withContext(Dispatchers.IO) {
+             profileRepo.logout()
+         }
     }
 
 

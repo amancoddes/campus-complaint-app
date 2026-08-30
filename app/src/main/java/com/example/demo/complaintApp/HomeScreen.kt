@@ -63,11 +63,26 @@ fun Home_Screen(navHostController: NavHostController,viewModel:HomeScreenViewMod
             launchSingleTop = true
             restoreState = true
         }
-    })
+    },
+        onNavCall = {
+                item ->
+            navHostController.navigate("complaint_detail/${item.id}")
+        }
+
+
+, onNaviOpenAllComplaint = {navHostController.navigate(AllRoute.ReportList.route){
+            popUpTo("main_Graph") {
+                saveState = true
+            }
+
+            launchSingleTop = true
+            restoreState = true
+        } }
+    )
 }
 @Composable
 fun HomeScreen2(uiState: HomeUiState2, snackbarHostState: SnackbarHostState,onRetry:() -> Unit,loginRetry:()->Unit
-,innerPadding: PaddingValues, counts: HomeCounts,state:ComplaintUiStates,onViewCall:()-> Unit
+,innerPadding: PaddingValues, counts: HomeCounts,state:ComplaintUiStates,onViewCall:()-> Unit,onNavCall: (ComplaintDataRoom.ComplaintEntity) -> Unit,onNaviOpenAllComplaint: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -114,7 +129,7 @@ fun HomeScreen2(uiState: HomeUiState2, snackbarHostState: SnackbarHostState,onRe
                        ComplaintUiStates.Loading -> LoadingSection()
                        is ComplaintUiStates.NotLogin ->                     LoginRequiredSection(onLoginClick = loginRetry)
 
-                       is ComplaintUiStates.Success -> HomeContent(recent = state.data, pending = counts.pending, resolved = counts.resolved, onViewAllClick = onViewCall)
+                       is ComplaintUiStates.Success -> HomeContent(recent = state.data, pending = counts.pending, resolved = counts.resolved, onViewAllClick = onViewCall, onNaviClick = onNavCall, onNaviOpenAllComplaint = onNaviOpenAllComplaint)
                    }
 
                 }
@@ -189,8 +204,8 @@ fun GreetingBanner(greeting: String) {
 }
 
 var list1= listOf(
-    ComplaintDataRoom.ComplaintEntity(complain = "xy"),
-            ComplaintDataRoom.ComplaintEntity(complain = "xy")
+    ComplaintDataRoom.ComplaintEntity(complain = "xy", url = "", resolvedImageUrl = ""),
+            ComplaintDataRoom.ComplaintEntity(complain = "xy", url = "", resolvedImageUrl = "")
 )
 
 @Preview(showBackground = true)
@@ -199,7 +214,7 @@ fun HomeScreenPreview2() {
     val fakeSnackbarHostState = SnackbarHostState()
     CityCareTheme {
         HomeScreen2( uiState = HomeUiState2.Success(greeting = "good morning"), snackbarHostState = fakeSnackbarHostState, onRetry = {  }, loginRetry = {}, innerPadding = PaddingValues(10.dp), counts = HomeCounts(pending = 4, resolved = 4) ,
-      state = ComplaintUiStates.Success(list1), onViewCall = {}  )
+      state = ComplaintUiStates.Success(list1), onViewCall = { }, onNavCall = {} , onNaviOpenAllComplaint = {} )
     }
 
 

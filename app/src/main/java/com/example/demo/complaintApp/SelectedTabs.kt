@@ -1,5 +1,6 @@
 package com.example.demo.complaintApp
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -76,9 +78,10 @@ fun ShowList(items: LazyPagingItems<ComplaintDataRoom.ComplaintEntity>,clickItem
                         Box {
 
                             AsyncImage(
-                                model = R.drawable.imagegreeting,
-                               //it.imageUrl
+                                model = item.url,
                                 contentDescription = null,
+                                placeholder = painterResource(R.drawable.ic_launcher_foreground),
+                                error = painterResource(R.drawable.imagedefault),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(180.dp),
@@ -158,6 +161,7 @@ fun ShowList(items: LazyPagingItems<ComplaintDataRoom.ComplaintEntity>,clickItem
             when (loadState.append) {
 
                 is LoadState.Loading -> {
+                    Log.e("loading check "," there 1")
                     item {
                         Box(
                             modifier = Modifier.fillMaxWidth(),

@@ -59,10 +59,26 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
     }
 }
 
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "ALTER TABLE complaints ADD COLUMN url TEXT"
+        )
+    }
+}
 
+
+
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "ALTER TABLE complaints ADD COLUMN resolvedImageUrl TEXT"
+        )
+    }
+}
 
 // version increse for updateTime
-@Database(entities = [ProfileRoom.ProfileEntity::class,ComplaintDataRoom.ComplaintEntity::class],version=2, exportSchema = false)
+@Database(entities = [ProfileRoom.ProfileEntity::class,ComplaintDataRoom.ComplaintEntity::class],version=4, exportSchema = false)
 abstract class AppDataBase:RoomDatabase(){
     abstract fun profileQueries():ProfileRoom.ProfileQueries// its return the object which type ProfileQueries so its means it can return the class obejct which implement this
     abstract fun complaintQueries():ComplaintDataRoom.ComplaintDao
@@ -85,7 +101,9 @@ class ComplaintDataRoom{
         val address: String = "",
         val status: String = "",
         val userId: String = "",
-        val updatedTime:Long=0L
+        val updatedTime:Long=0L,
+        val url:String?=null,
+        val resolvedImageUrl: String?=null
     )
 
 

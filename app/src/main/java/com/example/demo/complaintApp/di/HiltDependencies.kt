@@ -14,10 +14,10 @@ import com.example.demo.complaintApp.ProfileRoom
 import com.example.demo.complaintApp.ReportsRepoFirebase
 import com.example.demo.complaintApp.UserRepository
 import com.example.demo.complaintApp.FireBaseProfileDataFetchRemoteSource
-import com.example.demo.complaintApp.ListenerRepository
 import com.example.demo.complaintApp.MIGRATION_1_2
+import com.example.demo.complaintApp.MIGRATION_2_3
+import com.example.demo.complaintApp.MIGRATION_3_4
 import com.example.demo.complaintApp.ProfileRepository
-import com.example.demo.complaintApp.SessionManager
 import com.example.demo.complaintApp.UserComplaintsReadRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -49,82 +49,103 @@ object HiltDependencies {
 
     @Provides
     @MainDispatcher
-    fun getMainThread():CoroutineDispatcher=Dispatchers.Main
+    fun getMainThread(): CoroutineDispatcher = Dispatchers.Main
 
     @Provides
     @IoDispatcher
-    fun getIoThread():CoroutineDispatcher=Dispatchers.IO
-
-
-
-
-    @Provides
-    @Singleton
-    fun returnFirebase()= FirebaseFirestore.getInstance()
-
+    fun getIoThread(): CoroutineDispatcher = Dispatchers.IO
 
 
     @Provides
     @Singleton
-    fun returnRepo(fire:FirebaseFirestore,auth:FirebaseAuth)=
-        FireBaseComplaintSubmissionRemoteDataSource(fire,auth)
+    fun returnFirebase() = FirebaseFirestore.getInstance()
+
 
     @Provides
     @Singleton
-    fun returnComplaintSubmissionRepo(backendRepo:FireBaseComplaintSubmissionRemoteDataSource)=ComplaintSubmissionRepository(backendRepo = backendRepo)
+    fun returnRepo(fire: FirebaseFirestore, auth: FirebaseAuth) =
+        FireBaseComplaintSubmissionRemoteDataSource(fire, auth)
+
+    @Provides
+    @Singleton
+    fun returnComplaintSubmissionRepo(backendRepo: FireBaseComplaintSubmissionRemoteDataSource) =
+        ComplaintSubmissionRepository(backendRepo = backendRepo)
 
     @Provides
     @Singleton// live full app life
-    fun returnAuthRep()=FirebaseAuth.getInstance()
+    fun returnAuthRep() = FirebaseAuth.getInstance()
 
 
     @Provides
     @Singleton
-    fun returnUserRepositoryObj(fire: FirebaseFirestore,auth:FirebaseAuth)=UserRepository(fire,auth)
-
-
+    fun returnUserRepositoryObj(fire: FirebaseFirestore, auth: FirebaseAuth) =
+        UserRepository(fire, auth)
 
 
     @Provides
     @Singleton
-    fun returnRoomAppDatabaseImplObject(@ApplicationContext context: Context):AppDataBase {//NO. Room khud-se “background mei chalta” nahi hai.//Background work tab hota hai jab tum query call karte ho
-        return Room.databaseBuilder(context = context, klass = AppDataBase::class.java, name = "complainAppUserData")
-            .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING).addMigrations(MIGRATION_1_2)
+    fun returnRoomAppDatabaseImplObject(@ApplicationContext context: Context): AppDataBase {//NO. Room khud-se “background mei chalta” nahi hai.//Background work tab hota hai jab tum query call karte ho
+        return Room.databaseBuilder(
+            context = context,
+            klass = AppDataBase::class.java,
+            name = "complainAppUserData"
+        )
+            .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
+            .addMigrations(MIGRATION_1_2,MIGRATION_2_3,MIGRATION_3_4)
             .build()// fallback for migataion for app update
     }
+
     @Provides
     @Singleton
     fun provideGlobalMutex(): Mutex = Mutex()
 
     @Provides
     @Singleton
-    fun returnDao(appDatabaseobj:AppDataBase)=appDatabaseobj.profileQueries()
+    fun returnDao(appDatabaseobj: AppDataBase) = appDatabaseobj.profileQueries()
 
 
     @Provides
     @Singleton
-    fun returnLocationValidation()=LocationValidator(currentTime = { System.currentTimeMillis()})
+    fun returnLocationValidation() = LocationValidator(currentTime = { System.currentTimeMillis() })
 
     @Provides
     @Singleton
-    fun returnDaoTable2(appDaoNextTable:AppDataBase)=appDaoNextTable.complaintQueries()
+    fun returnDaoTable2(appDaoNextTable: AppDataBase) = appDaoNextTable.complaintQueries()
 
     @Provides
     @Singleton
-    fun returnUserDataRepoFirebase(fire: FirebaseFirestore)=FireBaseProfileDataFetchRemoteSource(fire)
-
-
-    @Provides
-    @Singleton
-    fun returnUserProfileDataRepo(dao:ProfileRoom.ProfileQueries,fireRepo:FireBaseProfileDataFetchRemoteSource,
-                                  mutex: Mutex,dao2: ComplaintDataRoom.ComplaintDao, repo:UserComplaintsReadRepository,
-                                  @MainDispatcher  mainDispatcher: CoroutineDispatcher,@IoDispatcher ioDispatcher:CoroutineDispatcher,dataStoreManager: DataStoreManager)=
-        ProfileRepository(dao, fireRepo, mutex, dao2, repo, mainDispatcher = mainDispatcher, ioDispatcher = ioDispatcher,dataStoreManager)
+    fun returnUserDataRepoFirebase(fire: FirebaseFirestore) =
+        FireBaseProfileDataFetchRemoteSource(fire)
 
 
     @Provides
     @Singleton
-    fun returnReportsRepofirebase(fire:FirebaseFirestore,dataStoreManager: DataStoreManager)=ReportsRepoFirebase(fire,dataStoreManager)
+    fun returnUserProfileDataRepo(
+        dao: ProfileRoom.ProfileQueries,
+        fireRepo: FireBaseProfileDataFetchRemoteSource,
+        mutex: Mutex,
+        dao2: ComplaintDataRoom.ComplaintDao,
+        repo: UserComplaintsReadRepository,
+        @MainDispatcher mainDispatcher: CoroutineDispatcher,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher,
+        dataStoreManager: DataStoreManager
+    ) =
+        ProfileRepository(
+            dao,
+            fireRepo,
+            mutex,
+            dao2,
+            repo,
+            mainDispatcher = mainDispatcher,
+            ioDispatcher = ioDispatcher,
+            dataStoreManager
+        )
+
+
+    @Provides
+    @Singleton
+    fun returnReportsRepofirebase(fire: FirebaseFirestore, dataStoreManager: DataStoreManager) =
+        ReportsRepoFirebase(fire, dataStoreManager)
 
     @Qualifier
     @Retention(AnnotationRetention.BINARY)
@@ -136,17 +157,17 @@ object HiltDependencies {
     fun provideApplicationScope(): CoroutineScope {
         return CoroutineScope(SupervisorJob() + Dispatchers.IO)
     }
-    @Provides
-    @Singleton
-    fun returnComplaintDao(dao: ComplaintDataRoom.ComplaintDao,auth: FirebaseAuth,fire:ReportsRepoFirebase,mutex: Mutex,dataStoreManager: DataStoreManager)=
-        UserComplaintsReadRepository(dao,auth,fire,mutex,dataStoreManager)
-
 
     @Provides
     @Singleton
-    fun returnListenerRepositoryInstance( firebase: FirebaseFirestore,dao: ComplaintDataRoom.ComplaintDao)=ListenerRepository(firebase, dao)
+    fun returnComplaintDao(
+        dao: ComplaintDataRoom.ComplaintDao,
+        auth: FirebaseAuth,
+        fire: ReportsRepoFirebase,
+        mutex: Mutex,
+        dataStoreManager: DataStoreManager
+    ) =
+        UserComplaintsReadRepository(dao, auth, fire, mutex, dataStoreManager)
 
-    @Provides
-    @Singleton
-    fun returnSessionManagerForListener(listenerRepo:ListenerRepository)=SessionManager(listenerRepo)
+
 }

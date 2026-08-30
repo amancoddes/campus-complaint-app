@@ -151,16 +151,21 @@ class ExampleInstrumentedTest {
         daoProfile.insertProfile(fakeData.toEntity(userId))
 
         val profileRepository=instance(testScheduler)
+
         profileRepository.observeUserInfo().test {
 
             assertEquals(ProfileFetchRoom.Loading, awaitItem())
+            // its check and than give success after check room
             val result=awaitItem() as ProfileFetchRoom.Success
             assertEquals(userId,result.data.uid)
 
-            daoProfile.insertProfile(fakeDataEdit.toEntity(userId))
+// user manually edit the profile
+            daoProfile.insertProfile(fakeDataEdit.toEntity(userId))// its store it and than the observeUser method give the success
 
             val result2=awaitItem() as ProfileFetchRoom.Success
             assertEquals(userId,result2.data.uid)
+            assertEquals(fakeDataEdit.name,result2.data.name)
+
 
             cancelAndIgnoreRemainingEvents()
         }

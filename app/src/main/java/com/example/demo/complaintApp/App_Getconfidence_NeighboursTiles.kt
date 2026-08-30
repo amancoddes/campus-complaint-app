@@ -19,7 +19,7 @@ enum class Confidence {
 }
 
 fun getOutdoorConfidence(accuracy: Float): Confidence = when {
-    accuracy <= 10f -> Confidence.HIGH
+    accuracy <= 10 f -> Confidence.HIGH
     accuracy <= 18f -> Confidence.MEDIUM
     else -> Confidence.REJECT
 }
